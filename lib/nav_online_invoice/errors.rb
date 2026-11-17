@@ -52,6 +52,9 @@ module NavOnlineInvoice
     end
   end
 
+  # NAV sent invoice data that could not be decoded (not valid base64, gzip or UTF-8).
+  class DecodeError < Error; end
+
   # NAV answered with an error code.
   #
   # Subclasses group the codes by what the caller can do about them. An unknown code is raised as
