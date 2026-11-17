@@ -57,6 +57,35 @@ module NavOnlineInvoice
       block_given? ? items.each(&) : items
     end
 
+    # Lists an invoice and all its modifications, one page at a time.
+    #
+    # The original invoice need not exist at NAV; modifications that refer to the number are listed anyway.
+    #
+    # @example
+    #   client.invoices.chain_digest("INV-2026-0001", direction: :outbound).each do |element|
+    #     puts "#{element.operation} #{element.invoice_number}"
+    #   end
+    # @param invoice_number [String] the original invoice
+    # @param direction [Symbol] +:outbound+ or +:inbound+
+    # @param tax_number [String, nil] the other party's tax number
+    # @param page [Integer]
+    # @return [Page<InvoiceChainElement>]
+    # @raise [ArgumentError] if a parameter is invalid
+    def chain_digest(invoice_number, direction:, tax_number: nil, page: 1)
+      @client.execute(Operations::QueryInvoiceChainDigest.new(invoice_number, direction:, tax_number:, page:))
+    end
+
+    # Walks all pages of {#chain_digest}, fetching each page only when it is reached.
+    #
+    # @param max_pages [Integer, nil] stop after this many pages
+    # @yieldparam element [InvoiceChainElement]
+    # @return [Enumerator<InvoiceChainElement>] if no block is given
+    def each_chain_element(invoice_number, direction:, tax_number: nil, max_pages: nil, &)
+      Operations::QueryInvoiceChainDigest.new(invoice_number, direction:, tax_number:)
+      items = Paging.items(max_pages) { |page| chain_digest(invoice_number, direction:, tax_number:, page:) }
+      block_given? ? items.each(&) : items
+    end
+
     # Asks whether an invoice number is valid at NAV, i.e. exists exactly once.
     #
     # @example

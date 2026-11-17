@@ -23,6 +23,13 @@ RSpec.describe NavOnlineInvoice::Invoices do
     expect(invoices.data("INV-2026-0001", direction: :outbound).invoice_xml).to include("INV-2026-0001")
   end
 
+  it "walks an invoice chain" do
+    stub_request(:post, "#{base}/queryInvoiceChainDigest")
+      .to_return(body: fixture("responses/query_invoice_chain_digest/chain.xml"))
+
+    expect(invoices.each_chain_element("INV-2026-0000", direction: :outbound).map(&:operation)).to eq(%i[create modify])
+  end
+
   describe "#each_digest" do
     let(:endpoint) { "#{base}/queryInvoiceDigest" }
     let(:november) { Date.new(2026, 11, 1)..Date.new(2026, 11, 30) }
