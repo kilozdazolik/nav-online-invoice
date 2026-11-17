@@ -15,6 +15,14 @@ RSpec.describe NavOnlineInvoice::SchemaValidator do
     }
   end
 
+  it "validates invoices against the data schema" do
+    expect(described_class.errors(official_request, schema: :data).join).to include("QueryTaxpayerRequest")
+  end
+
+  it "rejects an unknown schema" do
+    expect { described_class.errors(official_request, schema: :other) }.to raise_error(ArgumentError, /schema/)
+  end
+
   it "reports malformed XML" do
     expect(described_class.errors("<QueryTaxpayerRequest>")).not_to be_empty
   end
