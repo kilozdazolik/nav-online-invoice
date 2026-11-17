@@ -1,0 +1,221 @@
+# frozen_string_literal: true
+
+module NavOnlineInvoice
+  Configuration = Data.define(
+    :environment, :login, :password_hash, :signature_key, :exchange_key, :tax_number, :software,
+    :logger, :throttle, :validate_requests, :max_retries, :retry_base_delay,
+    :open_timeout, :read_timeout, :write_timeout, :clock, :request_id_generator
+  )
+
+  # Settings of one NAV technical user. Immutable; validated when created.
+  #
+  # Create one per company if the application works for several companies. The plain password is
+  # hashed at once and never stored.
+  #
+  # @example
+  #   config = NavOnlineInvoice::Configuration.new(
+  #     environment: :test,
+  #     login: "technicaluser01",
+  #     password: "secret",
+  #     signature_key: "...",
+  #     tax_number: "12345678",
+  #     software: {
+  #       id: "HU12345678ABCDE-01",
+  #       name: "My invoicing app",
+  #       operation: :local_software,
+  #       main_version: "1.0",
+  #       dev_name: "Example Ltd.",
+  #       dev_contact: "dev@example.com"
+  #     }
+  #   )
+  class Configuration
+    ENDPOINTS = {
+      test: "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/",
+      production: "https://api.onlineszamla.nav.gov.hu/invoiceService/v3/"
+    }.freeze
+
+    SECRETS = %i[login password_hash signature_key exchange_key].freeze
+    private_constant :SECRETS
+
+    # @param environment [Symbol] +:test+ or +:production+; the two need separate technical users
+    # @param login [String] the technical user's login
+    # @param password [String, nil] the technical user's password (or give +password_hash+)
+    # @param password_hash [String, nil] SHA-512 of the password, uppercase hex
+    # @param signature_key [String] the technical user's signature key
+    # @param exchange_key [String, nil] the exchange key; only needed to submit invoices
+    # @param tax_number [String] the technical user's company, 8 or 11 digits
+    # @param software [Hash, Software] the software data NAV requires in every request
+    # @param logger [Logger, nil] gets one line per request; request XML only at debug level, redacted
+    # @param throttle [#wait, nil] limits the request rate; nil turns it off
+    # @param validate_requests [Boolean] check each request against NAV's schema before sending
+    # @param max_retries [Integer] how often a temporary failure is retried
+    # @param retry_base_delay [Numeric] seconds before the first retry; doubles on each retry
+    # @param open_timeout [Numeric] seconds to wait for the connection
+    # @param read_timeout [Numeric] seconds to wait for the answer
+    # @param write_timeout [Numeric] seconds to wait while sending
+    # @param clock [#call] returns the current Time
+    # @param request_id_generator [#call] returns a new request ID
+    # @raise [ConfigurationError] if a value is missing or has the wrong format
+    def initialize(environment:, login:, signature_key:, tax_number:, software:, password: nil, password_hash: nil,
+                   exchange_key: nil, logger: nil, throttle: Throttle.default, validate_requests: true,
+                   max_retries: 2, retry_base_delay: 1.0, open_timeout: 5, read_timeout: 60, write_timeout: 60,
+                   clock: -> { Time.now }, request_id_generator: RequestId)
+      super(
+        environment: Validation.environment(environment),
+        login: Validation.login(login),
+        password_hash: Validation.password_hash(password, password_hash),
+        signature_key: Validation.required(:signature_key, signature_key),
+        exchange_key: exchange_key,
+        tax_number: Validation.tax_number(tax_number),
+        software: Validation.software(software),
+        logger: logger,
+        throttle: throttle || nil,
+        validate_requests: validate_requests ? true : false,
+        max_retries: Validation.non_negative_integer(:max_retries, max_retries),
+        retry_base_delay: Validation.non_negative_number(:retry_base_delay, retry_base_delay),
+        open_timeout: Validation.positive_number(:open_timeout, open_timeout),
+        read_timeout: Validation.positive_number(:read_timeout, read_timeout),
+        write_timeout: Validation.positive_number(:write_timeout, write_timeout),
+        clock: Validation.callable(:clock, clock),
+        request_id_generator: Validation.callable(:request_id_generator, request_id_generator)
+      )
+    end
+
+    # @param operation_name [String] e.g. "queryTaxpayer"
+    # @return [URI::HTTPS] the URL of the operation in this environment
+    def endpoint(operation_name)
+      URI("#{ENDPOINTS.fetch(environment)}#{operation_name}")
+    end
+
+    # Shows the settings with the credentials hidden.
+    def inspect
+      values = to_h.map { |key, value| "#{key}=#{SECRETS.include?(key) && value ? Redactor::FILTERED : value.inspect}" }
+      "#<data #{self.class.name} #{values.join(", ")}>"
+    end
+    alias to_s inspect
+
+    # Software data sent in every request.
+    #
+    # @!attribute id
+    #   @return [String] exactly 18 characters of [0-9A-Z-]; NAV suggests country code + tax number + suffix
+    # @!attribute operation
+    #   @return [Symbol] +:local_software+ or +:online_service+
+    # @!attribute dev_contact
+    #   @return [String] a working e-mail address of the developer
+    Software = Data.define(:id, :name, :operation, :main_version, :dev_name, :dev_contact, :dev_country_code,
+                           :dev_tax_number) do
+      def initialize(id:, name:, operation:, main_version:, dev_name:, dev_contact:, dev_country_code: nil,
+                     dev_tax_number: nil)
+        super
+      end
+    end
+
+    # Collects settings for {NavOnlineInvoice.configure}.
+    class Builder
+      ATTRIBUTES = %i[
+        environment login password password_hash signature_key exchange_key tax_number software logger throttle
+        validate_requests max_retries retry_base_delay open_timeout read_timeout write_timeout clock
+        request_id_generator
+      ].freeze
+
+      attr_accessor(*ATTRIBUTES)
+
+      # @return [Configuration]
+      def build
+        Configuration.new(**ATTRIBUTES.to_h { |name| [name, public_send(name)] }.compact)
+      rescue ArgumentError => e
+        raise ConfigurationError, e.message
+      end
+    end
+
+    # Checks and normalizes the settings.
+    module Validation
+      module_function
+
+      def environment(value)
+        return value if ENDPOINTS.key?(value)
+
+        raise ConfigurationError, "environment must be :test or :production, got #{value.inspect}"
+      end
+
+      def login(value)
+        return value if value.is_a?(String) && value.match?(/\A[a-zA-Z0-9]{6,15}\z/)
+
+        raise ConfigurationError, "login must be 6-15 letters or digits"
+      end
+
+      def password_hash(password, hash)
+        raise ConfigurationError, "give either password or password_hash, not both" if password && hash
+        return Crypto.password_hash(required(:password, password)) if password
+
+        hash = required(:password_hash, hash).upcase
+        return hash if hash.match?(/\A[0-9A-F]{128}\z/)
+
+        raise ConfigurationError, "password_hash must be a SHA-512 hex digest"
+      end
+
+      def tax_number(value)
+        TaxNumber.normalize(value)
+      rescue ArgumentError
+        raise ConfigurationError, "tax_number must have 8 or 11 digits, got #{value.inspect}"
+      end
+
+      def software(value)
+        software = value.is_a?(Hash) ? Software.new(**value) : value
+        raise ConfigurationError, "software must be a Hash" unless software.is_a?(Software)
+
+        software_id(software.id)
+        software_operation(software.operation)
+        %i[name main_version dev_name dev_contact].each do |key|
+          required(:"software.#{key}", software.public_send(key))
+        end
+        software
+      rescue ArgumentError => e
+        raise ConfigurationError, "software: #{e.message}"
+      end
+
+      def software_id(value)
+        return if value.is_a?(String) && value.match?(/\A[0-9A-Z-]{18}\z/)
+
+        raise ConfigurationError, "software.id must be exactly 18 characters of 0-9, A-Z and -"
+      end
+
+      def software_operation(value)
+        return if %i[local_software online_service].include?(value)
+
+        raise ConfigurationError, "software.operation must be :local_software or :online_service"
+      end
+
+      def required(name, value)
+        return value if value.is_a?(String) && !value.strip.empty?
+
+        raise ConfigurationError, "#{name} is required"
+      end
+
+      def non_negative_integer(name, value)
+        return value if value.is_a?(Integer) && !value.negative?
+
+        raise ConfigurationError, "#{name} must be an integer of 0 or more"
+      end
+
+      def non_negative_number(name, value)
+        return value if value.is_a?(Numeric) && !value.negative?
+
+        raise ConfigurationError, "#{name} must be a number of 0 or more"
+      end
+
+      def positive_number(name, value)
+        return value if value.is_a?(Numeric) && value.positive?
+
+        raise ConfigurationError, "#{name} must be a positive number"
+      end
+
+      def callable(name, value)
+        return value if value.respond_to?(:call)
+
+        raise ConfigurationError, "#{name} must respond to call"
+      end
+    end
+    private_constant :Validation
+  end
+end
