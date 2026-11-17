@@ -4,6 +4,7 @@ require "net/http"
 require "nokogiri"
 require "openssl"
 require "securerandom"
+require "time"
 require "uri"
 
 require_relative "nav_online_invoice/version"
@@ -18,6 +19,8 @@ require_relative "nav_online_invoice/configuration"
 require_relative "nav_online_invoice/request_builder"
 require_relative "nav_online_invoice/transport"
 require_relative "nav_online_invoice/response_parser"
+require_relative "nav_online_invoice/models"
+require_relative "nav_online_invoice/operations/query_taxpayer"
 
 # Each client gets its own configuration, so one application can call the
 # Online Invoice API for several companies.
