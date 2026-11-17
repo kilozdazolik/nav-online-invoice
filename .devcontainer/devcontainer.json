@@ -1,0 +1,26 @@
+// VS Code Dev Container: Ruby 4.0 with Ruby LSP (hover docs, go to definition, RuboCop).
+// Open the folder in VS Code and run "Dev Containers: Reopen in Container".
+{
+  "name": "nav_online_invoice",
+  "image": "mcr.microsoft.com/devcontainers/ruby:4.0",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "containerEnv": {
+    // Separate from bin/dev's vendor/bundle: the two images build native gems against different Rubies.
+    "BUNDLE_PATH": "${containerWorkspaceFolder}/vendor/devcontainer-bundle"
+  },
+  "postCreateCommand": "bundle install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["Shopify.ruby-lsp"],
+      "settings": {
+        "rubyLsp.rubyVersionManager": { "identifier": "none" },
+        "rubyLsp.formatter": "rubocop",
+        "[ruby]": {
+          "editor.defaultFormatter": "Shopify.ruby-lsp",
+          "editor.formatOnSave": false
+        }
+      }
+    }
+  }
+}

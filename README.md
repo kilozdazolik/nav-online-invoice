@@ -158,6 +158,9 @@ bin/dev bundle exec rake                 # specs + RuboCop
 RUBY_VERSION=3.3 bin/dev bundle exec rspec
 ```
 
+In VS Code, **Dev Containers: Reopen in Container** opens the project in a Ruby 4.0 container with
+[Ruby LSP](https://shopify.github.io/ruby-lsp/) (documentation on hover, go to definition, RuboCop).
+
 To call NAV for real, copy `.env.example` to `.env`, fill it in (never commit it), and run:
 
 ```sh
