@@ -27,8 +27,8 @@ RSpec.describe NavOnlineInvoice::SchemaValidator do
     expect(described_class.errors("<QueryTaxpayerRequest>")).not_to be_empty
   end
 
-  describe "response fixtures" do
-    Dir[File.join(FixtureHelpers::FIXTURE_DIR, "responses/**/*.xml")].each do |path|
+  describe "request and response fixtures" do
+    Dir[File.join(FixtureHelpers::FIXTURE_DIR, "{requests,responses}/**/*.xml")].each do |path|
       name = path.delete_prefix("#{FixtureHelpers::FIXTURE_DIR}/")
 
       it "accepts #{name}" do

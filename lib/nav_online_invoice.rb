@@ -31,9 +31,12 @@ require_relative "nav_online_invoice/paging"
 require_relative "nav_online_invoice/address"
 require_relative "nav_online_invoice/taxpayer"
 require_relative "nav_online_invoice/taxpayer_result"
+require_relative "nav_online_invoice/transaction"
 require_relative "nav_online_invoice/operations/base"
 require_relative "nav_online_invoice/operations/query_taxpayer"
+require_relative "nav_online_invoice/operations/query_transaction_list"
 require_relative "nav_online_invoice/taxpayers"
+require_relative "nav_online_invoice/transactions"
 require_relative "nav_online_invoice/client"
 
 # Client for the Hungarian Tax Authority's (NAV) Online Invoice API v3.0.

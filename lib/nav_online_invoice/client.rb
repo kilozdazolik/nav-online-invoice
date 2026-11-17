@@ -15,6 +15,9 @@ module NavOnlineInvoice
     # @return [Taxpayers] tax number lookups
     attr_reader :taxpayers
 
+    # @return [Transactions] queries about submissions
+    attr_reader :transactions
+
     # @param config [Configuration] defaults to the one set with {NavOnlineInvoice.configure}
     def initialize(config = NavOnlineInvoice.configuration)
       @config = config
@@ -22,6 +25,7 @@ module NavOnlineInvoice
       @transport = Transport.new(open_timeout: config.open_timeout, read_timeout: config.read_timeout,
                                  write_timeout: config.write_timeout)
       @taxpayers = Taxpayers.new(self)
+      @transactions = Transactions.new(self)
     end
 
     # Sends the operation and returns its result.
