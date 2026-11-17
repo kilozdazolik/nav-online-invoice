@@ -88,12 +88,22 @@ RSpec.describe NavOnlineInvoice::Client do
     expect(a_request(:post, endpoint)).not_to have_been_made
   end
 
-  it "logs without credentials" do
+  it "logs one line per request without any content" do
     stub_request(:post, endpoint).to_return(nav_answer("query_taxpayer/valid.xml"))
 
     client.taxpayers.query("12345678")
 
     expect(log.string).to include("queryTaxpayer request_id=RID1 attempt=1 status=200")
-    expect(log.string).not_to include(config.login, config.password_hash, config.signature_key)
+    expect(log.string).not_to include("<", "EXAMPLE TRADING", "12345678")
+  end
+
+  it "logs the XML only with log_payloads, and without credentials" do
+    stub_request(:post, endpoint).to_return(nav_answer("query_taxpayer/valid.xml"))
+    payload_client = described_class.new(config.with(log_payloads: true))
+
+    payload_client.taxpayers.query("12345678")
+
+    expect(log.string).to include("queryTaxpayer request: <?xml", "queryTaxpayer response: <?xml")
+    expect(log.string).not_to include(config.password_hash, "specuser0000001")
   end
 end

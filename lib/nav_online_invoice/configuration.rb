@@ -3,7 +3,7 @@
 module NavOnlineInvoice
   Configuration = Data.define(
     :environment, :login, :password_hash, :signature_key, :exchange_key, :tax_number, :software,
-    :logger, :throttle, :validate_requests, :max_retries, :retry_base_delay,
+    :logger, :log_payloads, :throttle, :validate_requests, :max_retries, :retry_base_delay,
     :open_timeout, :read_timeout, :write_timeout, :clock, :request_id_generator
   )
 
@@ -48,8 +48,9 @@ module NavOnlineInvoice
     # @param exchange_key [String, nil] the exchange key; only needed to submit invoices
     # @param tax_number [String] the technical user's company, 8 or 11 digits
     # @param software [Hash, Software] the software data NAV requires in every request
-    # @param logger [Logger, nil] gets one line per request; at debug level also the request XML (credentials
-    #   hidden) and NAV's answer, which can contain personal data
+    # @param logger [Logger, nil] gets one line per request, without any content
+    # @param log_payloads [Boolean] also log request and response XML at debug level, with credentials and
+    #   invoice data hidden; never in production, since it still contains names, addresses and amounts
     # @param throttle [#wait, nil] limits the request rate; nil turns it off
     # @param validate_requests [Boolean] check each request against NAV's schema before sending
     # @param max_retries [Integer] how often a temporary failure is retried
@@ -62,8 +63,9 @@ module NavOnlineInvoice
     # @raise [ConfigurationError] if a value is empty or has the wrong format
     # @raise [ArgumentError] if a required keyword is missing
     def initialize(environment:, login:, signature_key:, tax_number:, software:, password: nil, password_hash: nil,
-                   exchange_key: nil, logger: nil, throttle: Throttle.default, validate_requests: true,
-                   max_retries: 2, retry_base_delay: 1.0, open_timeout: 5, read_timeout: 60, write_timeout: 60,
+                   exchange_key: nil, logger: nil, log_payloads: false, throttle: Throttle.default,
+                   validate_requests: true, max_retries: 2, retry_base_delay: 1.0, open_timeout: 5, read_timeout: 60,
+                   write_timeout: 60,
                    clock: DEFAULT_CLOCK, request_id_generator: RequestId)
       super(
         environment: Validation.environment(environment),
@@ -74,6 +76,7 @@ module NavOnlineInvoice
         tax_number: Validation.tax_number(tax_number),
         software: Validation.software(software),
         logger: logger,
+        log_payloads: log_payloads ? true : false,
         throttle: throttle,
         validate_requests: validate_requests ? true : false,
         max_retries: Validation.non_negative_integer(:max_retries, max_retries),
@@ -152,8 +155,8 @@ module NavOnlineInvoice
     # Only the settings that were assigned are passed on, so +throttle = nil+ turns the throttle off.
     class Builder
       ATTRIBUTES = %i[
-        environment login password password_hash signature_key exchange_key tax_number software logger throttle
-        validate_requests max_retries retry_base_delay open_timeout read_timeout write_timeout clock
+        environment login password password_hash signature_key exchange_key tax_number software logger log_payloads
+        throttle validate_requests max_retries retry_base_delay open_timeout read_timeout write_timeout clock
         request_id_generator
       ].freeze
 

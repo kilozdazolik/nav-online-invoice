@@ -12,6 +12,16 @@ RSpec.describe NavOnlineInvoice::Redactor do
     expect(redacted).not_to include("lwilsmn0uqdxe6u", "2F43840A", "C5ADE8A2")
   end
 
+  it "hides invoice data and original requests" do
+    xml = "<invoiceDataResult><invoiceData>QUJDREVG</invoiceData></invoiceDataResult>" \
+          "<ns2:originalRequest>WFla</ns2:originalRequest>"
+
+    expect(described_class.redact(xml)).to eq(
+      "<invoiceDataResult><invoiceData>[FILTERED 8 bytes]</invoiceData></invoiceDataResult>" \
+      "<ns2:originalRequest>[FILTERED 4 bytes]</ns2:originalRequest>"
+    )
+  end
+
   it "keeps everything else" do
     expect(redacted).to include("<common:requestId>RID215118906689</common:requestId>",
                                 "<taxNumber>22222222</taxNumber>")

@@ -62,15 +62,22 @@ module NavOnlineInvoice
     end
 
     def send_request(operation, xml, request_id, attempt)
-      log(:debug) { "NAV #{operation.name} request: #{Redactor.redact(xml)}" }
+      log_payload(operation, "request", xml)
       response, duration = timed { @transport.post(config.endpoint(operation.name), xml) }
       log(:info) do
         "NAV #{operation.name} request_id=#{request_id} attempt=#{attempt} status=#{response.status} " \
-          "duration=#{duration}ms"
+          "duration=#{duration}ms bytes=#{response.body.bytesize}"
       end
-      # The answer may contain personal data (name and address of sole traders).
-      log(:debug) { "NAV #{operation.name} response: #{response.body}" }
+      log_payload(operation, "response", response.body)
       response
+    end
+
+    # Request and response XML can hold personal data and invoice contents, so they are logged only when the
+    # configuration asks for it, and even then with credentials and invoice data hidden.
+    def log_payload(operation, kind, xml)
+      return unless config.log_payloads
+
+      log(:debug) { "NAV #{operation.name} #{kind}: #{Redactor.redact(xml)}" }
     end
 
     # @return [Array(Object, Integer)] the block's result and its duration in milliseconds
