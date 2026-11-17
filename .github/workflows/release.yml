@@ -4,6 +4,9 @@
 # (15 minute) push-only API key, so no long-lived key is stored in the repository.
 # The exchange names the gem owner's immutable RubyGems account ID, which RubyGems
 # requires when a pending trusted publisher creates a new gem.
+#
+# Only the publish job can request that key. It runs no third-party code: no actions besides
+# checkout, no gem installs, just the runner's own Ruby. Actions are pinned to commit SHAs.
 name: Release
 
 on:
@@ -11,7 +14,30 @@ on:
     tags: ["v*"]
 
 jobs:
-  release:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check that the tag is on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - name: Run tests and lint
+        run: bundle exec rake spec rubocop
+      - name: Check version, tag and changelog
+        run: bundle exec rake release:check
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+
+  publish:
+    needs: verify
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -20,20 +46,9 @@ jobs:
     env:
       RUBYGEMS_OWNER_ID: "256267"
     steps:
-      - uses: actions/checkout@v5
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ruby-version: "4.0"
-          bundler-cache: true
-
-      - name: Run tests and lint
-        run: bundle exec rake spec rubocop
-
-      - name: Check version, tag and changelog
-        run: bundle exec rake release:check
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-
+          persist-credentials: false
       - name: Build gem
         run: gem build nav_online_invoice.gemspec --output "nav_online_invoice-${GITHUB_REF_NAME#v}.gem"
 
@@ -62,17 +77,16 @@ jobs:
 
   # Separate job, so the write permission is never held next to the RubyGems key.
   github-release:
-    needs: release
+    needs: publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       TAG: ${{ github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ruby-version: "4.0"
+          persist-credentials: false
       - name: Extract release notes from CHANGELOG.md
         run: |
           ruby -e '
