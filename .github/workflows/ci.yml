@@ -39,7 +39,13 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - run: bundle exec rspec
+      - run: bundle exec rspec --format progress --format json --out rspec.json
+      - name: Report failed examples as annotations
+        if: failure()
+        shell: bash
+        run: >-
+          ruby -rjson -e 'JSON.parse(File.read("rspec.json"))["examples"].select { _1["status"] == "failed" }.each { |e|
+          puts "::error file=#{e["file_path"].delete_prefix("./")},line=#{e["line_number"]}::#{e["full_description"]}: #{e.dig("exception", "message").to_s.gsub(/\r?\n/, " ")[0, 900]}" }'
 
   lint:
     runs-on: ubuntu-latest
