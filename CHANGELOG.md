@@ -6,6 +6,25 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Invoice queries: `client.invoices.digest` and `each_digest` (queryInvoiceDigest, with every NAV filter),
+  `check` (queryInvoiceCheck), `data` (queryInvoiceData, with the invoice decoded) and `chain_digest` and
+  `each_chain_element` (queryInvoiceChainDigest).
+- Transaction queries: `client.transactions.list` and `each_transaction` (queryTransactionList) and `status`
+  (queryTransactionStatus, with validation messages and the original request decoded).
+- `NavOnlineInvoice::Page` for paged results; lazy paging with an optional `max_pages`.
+- Parameters are checked before sending (date ranges, open relational ranges, enums, amounts).
+- `log_payloads` setting; `DecodeError`; `SchemaValidator` can check invoices against the data schema.
+- `script/windows_smoke.rb` to check an installation on a machine without a compiler.
+
+### Changed
+
+- Request and response XML is no longer logged at `debug` level unless `log_payloads: true` is set, and invoice
+  data is hidden even then.
+- `ApiError::TechnicalValidationMessage#result_code` is a Symbol (`:error`, `:critical`) instead of a String.
+- New runtime dependency: `bigdecimal` (any version shipped with Ruby 3.3 or later).
+
 ## [0.1.0] - 2026-11-17
 
 ### Added

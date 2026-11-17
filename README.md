@@ -5,13 +5,13 @@
 
 Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** (*Online Számla*).
 
-> **Status:** version 0.1 supports `queryTaxpayer` (tax number lookup). Invoice queries and invoice submission
-> follow in later versions. The API may change before 1.0.
+> **Status:** tax number lookups, invoice queries and transaction queries are supported. Invoice submission follows
+> in a later version. The API may change before 1.0.
 
 - **Plain Ruby, Rails optional.** Works in any Ruby process.
 - **Per-client configuration.** One process can call NAV for several companies, each with its own technical user.
-- **Few dependencies.** `Net::HTTP` and `openssl` from the standard library; the only runtime dependency is
-  `nokogiri`, which ships precompiled for Linux, macOS and Windows.
+- **Few dependencies.** `Net::HTTP` and `openssl` from the standard library; runtime dependencies are `nokogiri`,
+  which ships precompiled for Linux, macOS and Windows, and `bigdecimal`, which comes with Ruby.
 - **Safe by default.** Every request gets a fresh request ID and signature (also on retry), outgoing XML is checked
   against NAV's official schemas, requests are rate limited, and credentials are hidden in logs, `inspect`, `pp`
   and `to_h`.
@@ -78,6 +78,55 @@ digits, so `valid?` is also true for `12345678-9-99`; use `matches?` to check a 
 The gem never reads environment variables or Rails credentials; pass the values in. Keep one `Client` per technical
 user and reuse it; it is thread-safe.
 
+### Querying invoices
+
+```ruby
+november = Date.new(2026, 11, 1)..Date.new(2026, 11, 30)
+
+page = client.invoices.digest(direction: :outbound, issue_date: november)  # up to 100 per page
+page.each { |invoice| puts "#{invoice.invoice_number} #{invoice.customer_name} #{invoice.net_amount_huf}" }
+page.total_pages
+
+# All pages, fetched only as far as you read them:
+client.invoices.each_digest(direction: :inbound, issue_date: november, max_pages: 20) do |invoice|
+  # ...
+end
+
+client.invoices.check("INV-2026-0001", direction: :outbound)   # => true if valid at NAV
+result = client.invoices.data("INV-2026-0001", direction: :outbound)
+result.invoice_xml                                              # the invoice in NAV's InvoiceData format
+result.document                                                 # the same, parsed with Nokogiri
+client.invoices.chain_digest("INV-2026-0001", direction: :outbound) # the invoice and its modifications
+```
+
+`digest` needs exactly one of `issue_date` (at most 35 days), `ins_date` (when NAV received it, at most 840
+hours) and `original_invoice_number`. Further filters: `tax_number`, `group_member_tax_number`, `name` (the other
+party), `category`, `payment_method`, `appearance`, `source`, `currency`, `transaction_id`, `index`, `operation`,
+and `delivery_date`, `payment_date`, `net_amount`, `net_amount_huf`, `vat_amount`, `vat_amount_huf`, which take a
+single value or a range with both ends (`10_000..500_000`); NAV accepts no open ranges.
+
+Parameters are checked before sending; a bad one raises `ArgumentError`. `data` returns `nil` when NAV has no such
+invoice for you. A long `each_digest` can walk many pages, and NAV's data can change while it does: set
+`max_pages` or narrow the filters.
+
+### Transactions
+
+```ruby
+page = client.transactions.list(ins_date: (Time.now - 86_400)..Time.now) # submissions of the last day
+status = client.transactions.status(page.items.first.transaction_id)
+status.accepted?                                                       # all invoices done, without errors
+status.results.each do |result|
+  puts "#{result.index} #{result.status}"
+  result.business_validation_messages.each { |m| puts "  #{m.result_code} #{m.error_code} #{m.message}" }
+end
+```
+
+### Types
+
+Dates are `Date`, timestamps `Time` in UTC, amounts `BigDecimal`, NAV's codes lowercase symbols (`:outbound`,
+`:storno`, `:done`). Paged queries return a `NavOnlineInvoice::Page` with `items`, `current_page` and
+`total_pages`. `inspect` and `pp` of the results leave out names, addresses, amounts and invoice contents.
+
 ### Global configuration
 
 For an application with a single technical user:
@@ -109,7 +158,8 @@ NavOnlineInvoice.client.taxpayers.query("12345678")
 | `retry_base_delay` | `1.0` | seconds before the first retry; doubles on each retry |
 | `throttle` | shared `Throttle` | at most one request per second per process; `nil` turns it off |
 | `validate_requests` | `true` | check each request against NAV's schema before sending |
-| `logger` | `nil` | one line per request at `info`; request and response XML at `debug` |
+| `logger` | `nil` | one line per request at `info`, without any content |
+| `log_payloads` | `false` | also log the XML at `debug`; never in production, see below |
 | `request_id_generator` | `NavOnlineInvoice::RequestId` | any object with `call` |
 | `exchange_key` | `nil` | only needed to submit invoices (not supported yet) |
 | `clock` | `Time.method(:now)` | any object with `call` returning a `Time`; for tests |
@@ -133,6 +183,9 @@ can succeed.
 | `RequestError` | `INVALID_REQUEST`, `INVALID_TIMESTAMP`, `BAD_QUERY_PARAM_*`, ... | no |
 | `MaintenanceError` | NAV is under maintenance | no (`retryable?` is true: try again later) |
 | `TemporaryError` | `OPERATION_FAILED`, `REQUEST_ID_NOT_UNIQUE` | yes |
+| `DecodeError` | NAV sent invoice data that is not valid base64, gzip or UTF-8 | no |
+
+Invalid parameters raise Ruby's `ArgumentError` before anything is sent.
 
 Every `ApiError` (the parent of the NAV error classes) has `code`, `nav_message`, `request_id`, `http_status` and
 `technical_validation_messages`. An error code the gem does not know is raised as a plain `ApiError`.
@@ -152,15 +205,27 @@ end
 - Each attempt gets a **new request ID, timestamp and signature**. NAV rejects a reused request ID, including the
   ID of a request it refused with `FORBIDDEN` or `INVALID_REQUEST_SIGNATURE`.
 - Only temporary failures are retried. In the worst case one call takes about `(max_retries + 1) × read_timeout`.
-- NAV allows **one request per second per IP address** on `queryTaxpayer` and some other operations, and delays
-  the rest. The default throttle keeps one request per second within a process. If several processes share an
+- NAV allows **one request per second per IP address** on `queryTaxpayer`, `queryInvoiceData` and
+  `queryTransactionStatus` (and on invoice submission), and delays the rest. The default throttle keeps one such
+  request per second within a process; the other queries are not throttled. If several processes share an
   IP address, pass a shared `throttle`: any object with `wait(operation_name)`, e.g. one using a database lock.
 
 ### Logging and personal data
 
-At `info` level the gem logs one line per request: operation, request ID, attempt, HTTP status and duration. At
-`debug` level it also logs the request XML, with the login, password hash and signature hidden, and NAV's answer.
-The answer can contain personal data (the name and address of sole traders), so keep `debug` off in production.
+The gem logs one line per request at `info` level: operation, request ID, attempt, HTTP status, duration and size.
+It never logs request or response XML, unless you set `log_payloads: true`; then both go to `debug`, with the
+login, password hash, signature and the base64 invoice data hidden.
+
+**Do not set `log_payloads` in production.** Even with invoice data hidden, the XML contains names, addresses, tax
+numbers and amounts of your partners, and for sole traders that is personal data. Use it against NAV's test
+environment only.
+
+### Windows
+
+The gem needs no compiler: `nokogiri` ships precompiled, and `bigdecimal` comes with Ruby. Keep your lock file on
+the `bigdecimal` version your Ruby ships with (`gem list bigdecimal`), because there is no precompiled Windows build
+of newer versions. To check an installation on a machine without a compiler, run
+[script/windows_smoke.rb](script/windows_smoke.rb) after `gem install --local nav_online_invoice-X.Y.Z.gem`.
 
 ## Development
 
