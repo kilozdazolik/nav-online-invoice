@@ -67,6 +67,13 @@ RSpec.describe NavOnlineInvoice::Operations::QueryTaxpayer do
     expect(xml).to include("<taxNumber>87654321</taxNumber>")
   end
 
+  it "keeps its contract" do
+    operation = described_class.new("12345678")
+
+    expect([operation.request_root, operation.response_root, operation.rate_limited?, operation.auto_retry?])
+      .to eq(["QueryTaxpayerRequest", "QueryTaxpayerResponse", true, true])
+  end
+
   it "rejects a malformed tax number" do
     expect { described_class.new("1234") }.to raise_error(ArgumentError)
   end

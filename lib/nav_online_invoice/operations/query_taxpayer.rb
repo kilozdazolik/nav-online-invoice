@@ -1,14 +1,9 @@
 # frozen_string_literal: true
 
 module NavOnlineInvoice
-  # One class per NAV operation: what to send and how to read the answer.
-  #
-  # @api private
   module Operations
     # Looks up a taxpayer by tax number.
-    class QueryTaxpayer
-      include XmlReader
-
+    class QueryTaxpayer < Base
       ADDRESS_FIELDS = {
         country_code: "countryCode", region: "region", postal_code: "postalCode", city: "city",
         street_name: "streetName", public_place_category: "publicPlaceCategory", number: "number",
@@ -19,13 +14,11 @@ module NavOnlineInvoice
       # @param tax_number [String] 8 or 11 digits
       # @raise [ArgumentError] if the tax number has the wrong format
       def initialize(tax_number)
+        super()
         @tax_number = TaxNumber.normalize(tax_number)
       end
 
       def name = "queryTaxpayer"
-      def request_root = "QueryTaxpayerRequest"
-      def response_root = "QueryTaxpayerResponse"
-      def rate_limited? = true
       def auto_retry? = true
 
       def build_body(xml)
