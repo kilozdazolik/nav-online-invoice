@@ -33,14 +33,10 @@ RSpec.describe NavOnlineInvoice::Throttle do
     expect(sleeps).to be_empty
   end
 
-  it "keeps the interval between calls from several threads" do
-    real = described_class.new(interval: 0.05)
-    times = []
-    Array.new(3) { Thread.new { real.wait.then { times << Process.clock_gettime(Process::CLOCK_MONOTONIC) } } }
-         .each(&:join)
+  it "lets threads through one at a time" do
+    Array.new(3) { Thread.new { throttle.wait } }.each(&:join)
 
-    gaps = times.sort.each_cons(2).map { |a, b| b - a }
-    expect(gaps).to all(be >= 0.045)
+    expect(sleeps).to eq([1.0, 1.0])
   end
 
   it "shares one default instance" do
