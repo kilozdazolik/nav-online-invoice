@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented data in the shape of a NAV response. -->
+<QueryInvoiceDigestResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/api" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common" xmlns:ns3="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <ns2:header>
+    <ns2:requestId>NOI0000000001TEST0001</ns2:requestId>
+    <ns2:timestamp>2026-11-17T10:00:00.000Z</ns2:timestamp>
+    <ns2:requestVersion>3.0</ns2:requestVersion>
+    <ns2:headerVersion>1.0</ns2:headerVersion>
+  </ns2:header>
+  <ns2:result>
+    <ns2:funcCode>OK</ns2:funcCode>
+  </ns2:result>
+  <software>
+    <softwareId>HU12345678TEST-001</softwareId>
+    <softwareName>Spec Suite</softwareName>
+    <softwareOperation>LOCAL_SOFTWARE</softwareOperation>
+    <softwareMainVersion>1.0</softwareMainVersion>
+    <softwareDevName>Example Developer</softwareDevName>
+    <softwareDevContact>dev@example.com</softwareDevContact>
+  </software>
+  <invoiceDigestResult>
+    <currentPage>1</currentPage>
+    <availablePage>2</availablePage>
+    <invoiceDigest>
+      <invoiceNumber>INV-2026-0001</invoiceNumber>
+      <batchIndex>1</batchIndex>
+      <invoiceOperation>MODIFY</invoiceOperation>
+      <invoiceCategory>NORMAL</invoiceCategory>
+      <invoiceIssueDate>2026-11-16</invoiceIssueDate>
+      <supplierTaxNumber>12345678</supplierTaxNumber>
+      <supplierGroupMemberTaxNumber>11111111</supplierGroupMemberTaxNumber>
+      <supplierName>EXAMPLE TRADING KFT.</supplierName>
+      <customerTaxNumber>87654321</customerTaxNumber>
+      <customerGroupMemberTaxNumber>22222222</customerGroupMemberTaxNumber>
+      <customerName>PÉLDA ÜGYFÉL BT.</customerName>
+      <paymentMethod>TRANSFER</paymentMethod>
+      <paymentDate>2026-11-24</paymentDate>
+      <invoiceAppearance>ELECTRONIC</invoiceAppearance>
+      <source>XML</source>
+      <invoiceDeliveryDate>2026-11-16</invoiceDeliveryDate>
+      <currency>HUF</currency>
+      <invoiceNetAmount>20000.00</invoiceNetAmount>
+      <invoiceNetAmountHUF>20000.00</invoiceNetAmountHUF>
+      <invoiceVatAmount>5400.00</invoiceVatAmount>
+      <invoiceVatAmountHUF>5400.00</invoiceVatAmountHUF>
+      <transactionId>3XAMPLETRANSACT10N01</transactionId>
+      <index>1</index>
+      <originalInvoiceNumber>INV-2026-0000</originalInvoiceNumber>
+      <modificationIndex>2</modificationIndex>
+      <insDate>2026-11-16T08:15:30.120Z</insDate>
+      <completenessIndicator>false</completenessIndicator>
+    </invoiceDigest>
+    <invoiceDigest>
+      <invoiceNumber>INV-2026-0002</invoiceNumber>
+      <invoiceOperation>CREATE</invoiceOperation>
+      <invoiceCategory>SIMPLIFIED</invoiceCategory>
+      <invoiceIssueDate>2026-11-17</invoiceIssueDate>
+      <supplierTaxNumber>12345678</supplierTaxNumber>
+      <supplierName>EXAMPLE TRADING KFT.</supplierName>
+      <insDate>2026-11-17T07:00:00Z</insDate>
+    </invoiceDigest>
+  </invoiceDigestResult>
+</QueryInvoiceDigestResponse>

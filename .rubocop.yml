@@ -40,3 +40,6 @@ Metrics/MethodLength:
 
 RSpec/MultipleMemoizedHelpers:
   Max: 8
+
+Metrics/ClassLength:
+  CountAsOne: [array, hash, heredoc, method_call]

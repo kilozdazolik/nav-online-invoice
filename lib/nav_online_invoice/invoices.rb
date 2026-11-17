@@ -8,6 +8,55 @@ module NavOnlineInvoice
       @client = client
     end
 
+    # Lists invoices issued by you (+:outbound+) or to you (+:inbound+), one page of up to 100 at a time.
+    #
+    # Give exactly one of +issue_date+, +ins_date+ and +original_invoice_number+. All filters must match.
+    #
+    # @example
+    #   page = client.invoices.digest(direction: :outbound, issue_date: Date.new(2026, 11, 1)..Date.new(2026, 11, 30),
+    #                                 net_amount: 10_000..500_000)
+    #   page.each { |invoice| puts "#{invoice.invoice_number} #{invoice.net_amount_huf}" }
+    # @param direction [Symbol] +:outbound+ or +:inbound+
+    # @param page [Integer]
+    # @option filters [Range<Date>] :issue_date at most 35 days
+    # @option filters [Range<Time>] :ins_date when NAV received them; inclusive, at most 840 hours
+    # @option filters [String] :original_invoice_number the invoice and all its modifications
+    # @option filters [String] :tax_number the other party (customer if outbound, supplier if inbound)
+    # @option filters [String] :group_member_tax_number
+    # @option filters [String] :name the other party's name, starting with this; at least 5 characters
+    # @option filters [Symbol] :category +:normal+, +:simplified+ or +:aggregate+
+    # @option filters [Symbol] :payment_method +:transfer+, +:cash+, +:card+, +:voucher+ or +:other+
+    # @option filters [Symbol] :appearance +:paper+, +:electronic+, +:edi+ or +:unknown+
+    # @option filters [Symbol] :source +:web+, +:xml+, +:mgm+, +:opg+ or +:osz+
+    # @option filters [String] :currency ISO code, e.g. "EUR"
+    # @option filters [Date, Range<Date>] :delivery_date a day, or a range with both ends
+    # @option filters [Date, Range<Date>] :payment_date
+    # @option filters [Numeric, Range] :net_amount an amount, or a range with both ends; same for the next three
+    # @option filters [Numeric, Range] :net_amount_huf
+    # @option filters [Numeric, Range] :vat_amount
+    # @option filters [Numeric, Range] :vat_amount_huf
+    # @option filters [String] :transaction_id invoices of one submission
+    # @option filters [Integer] :index with +transaction_id+: the invoice's position in it
+    # @option filters [Symbol] :operation with +transaction_id+: +:create+, +:modify+ or +:storno+
+    # @return [Page<InvoiceDigest>]
+    # @raise [ArgumentError] if a parameter is invalid
+    def digest(direction:, page: 1, **filters)
+      @client.execute(Operations::QueryInvoiceDigest.new(direction:, page:, **filters))
+    end
+
+    # Walks all pages of {#digest}, fetching each page only when it is reached.
+    #
+    # NAV's data can change between pages, e.g. when new invoices arrive.
+    #
+    # @param max_pages [Integer, nil] stop after this many pages
+    # @yieldparam invoice [InvoiceDigest]
+    # @return [Enumerator<InvoiceDigest>] if no block is given
+    def each_digest(direction:, max_pages: nil, **filters, &)
+      Operations::QueryInvoiceDigest.new(direction:, **filters) # fail on bad filters before the first request
+      items = Paging.items(max_pages) { |page| digest(direction:, page:, **filters) }
+      block_given? ? items.each(&) : items
+    end
+
     # Asks whether an invoice number is valid at NAV, i.e. exists exactly once.
     #
     # @example
