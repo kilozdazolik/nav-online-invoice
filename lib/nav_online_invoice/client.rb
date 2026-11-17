@@ -15,6 +15,9 @@ module NavOnlineInvoice
     # @return [Taxpayers] tax number lookups
     attr_reader :taxpayers
 
+    # @return [Invoices] invoice queries
+    attr_reader :invoices
+
     # @return [Transactions] queries about submissions
     attr_reader :transactions
 
@@ -25,6 +28,7 @@ module NavOnlineInvoice
       @transport = Transport.new(open_timeout: config.open_timeout, read_timeout: config.read_timeout,
                                  write_timeout: config.write_timeout)
       @taxpayers = Taxpayers.new(self)
+      @invoices = Invoices.new(self)
       @transactions = Transactions.new(self)
     end
 
