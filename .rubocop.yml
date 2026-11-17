@@ -37,3 +37,6 @@ Metrics/BlockLength:
 Metrics/MethodLength:
   Max: 15
   CountAsOne: [array, hash, heredoc, method_call]
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
