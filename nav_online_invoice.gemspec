@@ -28,5 +28,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb", "schemas/**/*", "LICENSE.txt", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
+  # Any version Ruby ships with is enough; a newer one would have to be compiled on Windows.
+  spec.add_dependency "bigdecimal", ">= 3.1"
   spec.add_dependency "nokogiri", ">= 1.16", "< 2"
 end

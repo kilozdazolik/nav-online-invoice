@@ -39,6 +39,12 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+      - name: Check that bigdecimal is the one bundled with Ruby
+        if: runner.os == 'Windows'
+        shell: bash
+        run: >-
+          bundle exec ruby -rbigdecimal -e 'v = Gem.loaded_specs.fetch("bigdecimal").version.to_s;
+          abort "bigdecimal #{v} is not the version bundled with Ruby (4.0.1)" unless v == "4.0.1"; puts "bigdecimal #{v}"'
       - run: bundle exec rspec --format progress --format json --out rspec.json
       - name: Report failed examples as annotations
         if: failure()
