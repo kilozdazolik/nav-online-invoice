@@ -34,7 +34,7 @@ module NavOnlineInvoice
     def header(xml, request_id, time)
       xml["common"].header do
         xml["common"].requestId request_id
-        xml["common"].timestamp time.getutc.strftime("%Y-%m-%dT%H:%M:%S.%LZ")
+        xml["common"].timestamp Params.timestamp(time)
         xml["common"].requestVersion REQUEST_VERSION
         xml["common"].headerVersion HEADER_VERSION
       end
