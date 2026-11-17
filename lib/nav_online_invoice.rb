@@ -14,6 +14,7 @@ require_relative "nav_online_invoice/tax_number"
 require_relative "nav_online_invoice/throttle"
 require_relative "nav_online_invoice/redactor"
 require_relative "nav_online_invoice/configuration"
+require_relative "nav_online_invoice/request_builder"
 
 # Each client gets its own configuration, so one application can call the
 # Online Invoice API for several companies.
