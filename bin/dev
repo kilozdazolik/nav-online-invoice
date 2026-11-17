@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Runs a command in the development container as the current user.
+#   bin/dev bundle install
+#   bin/dev bundle exec rake
+#   RUBY_VERSION=3.3 bin/dev bundle exec rspec
+set -euo pipefail
+cd "$(dirname "$0")/.."
+DEV_UID="$(id -u)" DEV_GID="$(id -g)" \
+  exec docker compose -f docker-compose.dev.yml run --rm dev "$@"

@@ -1,0 +1,15 @@
+# Development container for the gem. Use bin/dev instead of calling this directly,
+# so files are created with your own user id.
+name: nav_online_invoice
+
+services:
+  dev:
+    image: ruby:${RUBY_VERSION:-4.0}
+    working_dir: /app
+    user: "${DEV_UID:?run via bin/dev}:${DEV_GID:?run via bin/dev}"
+    environment:
+      HOME: /tmp
+      BUNDLE_PATH: /app/vendor/bundle
+      BUNDLE_GEMFILE: ${BUNDLE_GEMFILE:-/app/Gemfile}
+    volumes:
+      - .:/app

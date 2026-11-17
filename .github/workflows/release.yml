@@ -1,0 +1,61 @@
+# Publishes the gem to RubyGems.org when a version tag (v1.2.3) is pushed.
+#
+# Uses RubyGems trusted publishing: the GitHub OIDC token is exchanged for a short-lived
+# (15 minute) push-only API key, so no long-lived key is stored in the repository.
+# The exchange names the gem owner's immutable RubyGems account ID, which RubyGems
+# requires when a pending trusted publisher creates a new gem.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RUBYGEMS_OWNER_ID: "256267"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: Run tests and lint
+        run: bundle exec rake spec rubocop
+
+      - name: Check version, tag and changelog
+        run: bundle exec rake release:check
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+
+      - name: Build gem
+        run: gem build nav_online_invoice.gemspec --output pkg.gem
+
+      - name: Exchange OIDC token for a RubyGems API key
+        run: |
+          ruby -rjson -rnet/http -ruri <<'RUBY'
+            oidc_uri = URI("#{ENV.fetch("ACTIONS_ID_TOKEN_REQUEST_URL")}&audience=rubygems.org")
+            oidc = Net::HTTP.get_response(oidc_uri, "Authorization" => "bearer #{ENV.fetch("ACTIONS_ID_TOKEN_REQUEST_TOKEN")}")
+            abort "OIDC token request failed: HTTP #{oidc.code}" unless oidc.is_a?(Net::HTTPSuccess)
+            jwt = JSON.parse(oidc.body).fetch("value")
+
+            exchange = Net::HTTP.post(
+              URI("https://rubygems.org/api/v1/oidc/trusted_publisher/exchange_token"),
+              JSON.generate(jwt: jwt, owner: ENV.fetch("RUBYGEMS_OWNER_ID")),
+              "Content-Type" => "application/json"
+            )
+            abort "Token exchange failed: HTTP #{exchange.code} #{exchange.body}" unless exchange.is_a?(Net::HTTPSuccess)
+
+            key = JSON.parse(exchange.body).fetch("rubygems_api_key")
+            puts "::add-mask::#{key}"
+            File.write(ENV.fetch("GITHUB_ENV"), "GEM_HOST_API_KEY=#{key}\n", mode: "a")
+          RUBY
+
+      - name: Push gem to RubyGems.org
+        run: gem push pkg.gem

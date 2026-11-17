@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+# CI row that runs the suite with Rails loaded (for the optional Railtie).
+eval_gemfile "../Gemfile"
+
+gem "railties", "~> 8.1.0"

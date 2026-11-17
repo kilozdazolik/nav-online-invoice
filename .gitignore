@@ -1,0 +1,17 @@
+# Bundler and build output
+/.bundle/
+/vendor/
+/pkg/
+*.gem
+/gemfiles/*.lock
+
+# Test output
+/.rspec_status
+/coverage/
+
+# Secrets: NAV technical user credentials must never be committed
+.env
+.env.*
+!.env.example
+*.key
+*.pem

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Ruby ${{ matrix.ruby }} / ${{ matrix.os }}${{ matrix.gemfile && format(' / {0}', matrix.gemfile) || '' }}
+    runs-on: ${{ matrix.os }}
+    # The ruby-head row is an early warning for the next Ruby release; it may fail without failing CI.
+    continue-on-error: ${{ matrix.experimental == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        ruby: ["3.3", "3.4", "4.0"]
+        gemfile: [""]
+        include:
+          - os: ubuntu-latest
+            ruby: "4.0"
+            gemfile: rails_8_1
+          - os: windows-latest
+            ruby: "4.0"
+            gemfile: ""
+          - os: ubuntu-latest
+            ruby: head
+            gemfile: ""
+            experimental: true
+    env:
+      BUNDLE_GEMFILE: ${{ matrix.gemfile && format('{0}/gemfiles/{1}.gemfile', github.workspace, matrix.gemfile) || format('{0}/Gemfile', github.workspace) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec rspec
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - run: bundle exec rubocop
+      - run: bundle exec rake release:check
