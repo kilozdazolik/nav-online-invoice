@@ -7,6 +7,8 @@ module NavOnlineInvoice
   module Operations
     # Looks up a taxpayer by tax number.
     class QueryTaxpayer
+      include XmlReader
+
       ADDRESS_FIELDS = {
         country_code: "countryCode", region: "region", postal_code: "postalCode", city: "city",
         street_name: "streetName", public_place_category: "publicPlaceCategory", number: "number",
@@ -36,8 +38,8 @@ module NavOnlineInvoice
         root = document.root
         TaxpayerResult.new(
           request_id: request_id,
-          info_date: time(text(root, "api:infoDate")),
-          validity: boolean(text(root, "api:taxpayerValidity")),
+          info_date: time(root, "api:infoDate"),
+          validity: boolean(root, "api:taxpayerValidity"),
           taxpayer: root.at_xpath("api:taxpayerData", NAMESPACES)&.then { |node| taxpayer(node) },
           raw_xml: raw_xml
         )
@@ -53,7 +55,7 @@ module NavOnlineInvoice
           taxpayer_id: text(detail, "base:taxpayerId"),
           vat_code: text(detail, "base:vatCode"),
           county_code: text(detail, "base:countyCode"),
-          incorporation: symbol(text(node, "api:incorporation")),
+          incorporation: symbol(node, "api:incorporation"),
           vat_group_membership: text(node, "api:vatGroupMembership"),
           addresses: node.xpath("api:taxpayerAddressList/api:taxpayerAddressItem", NAMESPACES).map { address(_1) }
         )
@@ -61,26 +63,8 @@ module NavOnlineInvoice
 
       def address(item)
         place = item.at_xpath("api:taxpayerAddress", NAMESPACES)
-        Address.new(type: symbol(text(item, "api:taxpayerAddressType")),
+        Address.new(type: symbol(item, "api:taxpayerAddressType"),
                     **ADDRESS_FIELDS.transform_values { |element| text(place, "base:#{element}") })
-      end
-
-      def text(node, xpath)
-        node&.at_xpath(xpath, NAMESPACES)&.text
-      end
-
-      def symbol(value)
-        value&.downcase&.to_sym
-      end
-
-      def boolean(value)
-        { "true" => true, "1" => true, "false" => false, "0" => false }[value&.strip]
-      end
-
-      def time(value)
-        value && Time.iso8601(value)
-      rescue ArgumentError
-        nil
       end
     end
   end

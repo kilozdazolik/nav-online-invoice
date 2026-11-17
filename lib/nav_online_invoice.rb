@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "bigdecimal"
+require "date"
 require "net/http"
 require "nokogiri"
 require "openssl"
@@ -11,6 +13,7 @@ require "zlib"
 require_relative "nav_online_invoice/version"
 require_relative "nav_online_invoice/errors"
 require_relative "nav_online_invoice/namespaces"
+require_relative "nav_online_invoice/xml_reader"
 require_relative "nav_online_invoice/schema_validator"
 require_relative "nav_online_invoice/crypto"
 require_relative "nav_online_invoice/request_id"

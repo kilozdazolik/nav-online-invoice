@@ -60,7 +60,7 @@ module NavOnlineInvoice
     # One schema violation reported by NAV in a GeneralErrorResponse.
     #
     # @!attribute result_code
-    #   @return [String] "ERROR" or "CRITICAL"
+    #   @return [Symbol] +:error+ or +:critical+
     # @!attribute error_code
     #   @return [String, nil]
     # @!attribute message

@@ -31,7 +31,7 @@ RSpec.describe NavOnlineInvoice::ResponseParser do
     expect { parse(fixture("responses/general_error/technical_validation.xml"), status: 400) }
       .to raise_error(NavOnlineInvoice::RequestError) { |error|
         expect(error.technical_validation_messages).to contain_exactly(
-          have_attributes(result_code: "ERROR", error_code: "SCHEMA_VIOLATION", message: /taxNumber/)
+          have_attributes(result_code: :error, error_code: "SCHEMA_VIOLATION", message: /taxNumber/)
         )
       }
   end

@@ -8,6 +8,8 @@ module NavOnlineInvoice
   # @api private
   module ResponseParser
     class << self
+      include XmlReader
+
       # Checks NAV's answer and returns it as a document.
       #
       # @param response [Transport::Response]
@@ -75,16 +77,6 @@ module NavOnlineInvoice
         )
       end
 
-      def technical_validation_messages(root)
-        root.xpath("api:technicalValidationMessages", NAMESPACES).map do |node|
-          ApiError::TechnicalValidationMessage.new(
-            result_code: text(node, "common:validationResultCode"),
-            error_code: text(node, "common:validationErrorCode"),
-            message: text(node, "common:message")
-          )
-        end
-      end
-
       def non_nav_error(response)
         status = response.status
         if status == 503
@@ -94,10 +86,6 @@ module NavOnlineInvoice
         # 404 without a body and a plain-text 500 mean a wrong URL or method: retrying will not help.
         TransportError.new("NAV sent no XML answer (HTTP #{status}): #{response.body.to_s.b[0, 200].scrub}",
                            http_status: status, retryable: [502, 504].include?(status))
-      end
-
-      def text(node, xpath)
-        node&.at_xpath(xpath, NAMESPACES)&.text
       end
     end
   end
