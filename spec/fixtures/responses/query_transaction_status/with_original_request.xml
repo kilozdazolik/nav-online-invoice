@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented data in the shape of a NAV response. -->
+<QueryTransactionStatusResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/api" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common" xmlns:ns3="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <ns2:header>
+    <ns2:requestId>NOI0000000001TEST0001</ns2:requestId>
+    <ns2:timestamp>2026-11-17T10:00:00.000Z</ns2:timestamp>
+    <ns2:requestVersion>3.0</ns2:requestVersion>
+    <ns2:headerVersion>1.0</ns2:headerVersion>
+  </ns2:header>
+  <ns2:result>
+    <ns2:funcCode>OK</ns2:funcCode>
+  </ns2:result>
+  <software>
+    <softwareId>HU12345678TEST-001</softwareId>
+    <softwareName>Spec Suite</softwareName>
+    <softwareOperation>LOCAL_SOFTWARE</softwareOperation>
+    <softwareMainVersion>1.0</softwareMainVersion>
+    <softwareDevName>Example Developer</softwareDevName>
+    <softwareDevContact>dev@example.com</softwareDevContact>
+  </software>
+  <processingResults>
+    <processingResult>
+      <index>1</index>
+      <invoiceStatus>DONE</invoiceStatus>
+      <compressedContentIndicator>true</compressedContentIndicator>
+      <originalRequest>H4sIAAAAAAACA8VY247iOBB976/I8rJPEJKmL2qlM0pD6EELAUFoze6bJ3FDJHLZ2EHwCfsLq32Zb+kfGzvkYsdOmF2NtE+d1KlTrir7lNMYn07hQTnCFAVx9NzTBsOeAiMv9oNo99zbutP+Y++TeWP80u8rVqQE0RFGGPr0IQ48SP4qjvX2K1JmF8MEYKDcDobKe5yGAA+Ufp+wWZCsF6Hn3h7j5ElVkbeHIUCDCBwHu/g42GfqcmOpJILqE+/exf3pK0DwRzjUr2feKIpRJOhk4VeYmjPnra8P9fv+cDjUDJUHGfcZQhlNE5q5t6b1tfvKvQYpw4vD5AAxjCBCs8gPPIDj1HwHBwQNVQ4yCy1AENH32nJ5q98/Q+CXNmJFWZIcApjOove4NjOAC051PQxOW/KEwSkBZ8L2TU2/Hd3dPzwaahOR8I4Aj2OfdKPwLt8lrl6cRfico6PSnbGxKaudOVcVOSCEpv3FWqzmtuKurcnMeVV+m7qDOkDuIuNavp+S3ssSRQHdG6kDV0t6Sfzzli0mPYv1l6wkRhgccpw2uaAxVvlaAT6bL9uJtbI3brkUtUm9ge8HmEgVHIoCJhCD4GAuZo5rKVt3bCmaPijCtDnzTVG7u1I3WwBriD+VhpchHIeSw1oCbwBvMMAZMifLBal7NiaaEbAWJh0jjRpKtEUEEhk8PtzfjW517YoMmkLQuoQgkYJ22ykF2sPO3Lm2NAuvys5lsPr4az6xlI9/Xn+fkkflhQqF85BR/2eh6GQg/xuhbP6wHdd2Jmv7P0ul7NPfLrmofq5SWptaQw2lFMNeXK5ExuS+2cXp2XSW64U1ry6jyi7hTOAhIFf6ue0i43D+UKQpuf3L/ZzStBkL6wpP3h5EO7imMYgquHfWkcgqJN8MC4j3sW+SMe5spvbaUHm7hMFlr48qhpB1UZWVJBCkICJXqT23x+566dCxIqLMrkjbX5nZK7hcZR6QO50JQbZ0B/0ZhqHwESCDauKBBOLKoIZiAJB+Mm9NJ/uU0NNFjmsdF6cZvJBkaDPCBCIvDRJ64k0XRB/fPAT8j2/oEoFFWeafGYgwlRu53qtn1iGLArx8X0CAspScn+WWbDNva3qvUvrlow3zKVAbmvlaIR0pyKHflE1R5o2C+OIiXg1Nj3ziDIv+VsZOChGClEXtjQFxJZk8LhnkTZHkGLlSVjD1yAkHO2gOB/qDofI2yWLSYOUyrd0gWFH43agsq7Z1MmjRElJLL+S3NUVe0xihK5vG+BRbr9dLi+APhcg3syNKSyEd6V4cWo7oBRQmCzdFytGyycIQsBOdfM3mFrG+Enk5yw/A8WedsWNXeHLSpXtXw7zmBPs1IqM8GSTPVZpVGbpNFTXMCUMwX+PV8pAh8oRlX3Zq1wZX/9w2GyzYu0hMc2WQhNrsjmDu4tSdkSE3QuWCkgp7rkShX0VMRqalyiVIN5GZEHJQzFXIqaJymq6s+S8BKvdTgKEyP5KYN98B2va9OZgRAAA=</originalRequest>
+    </processingResult>
+    <originalRequestVersion>3.0</originalRequestVersion>
+    <annulmentData>
+      <annulmentVerificationStatus>VERIFICATION_DONE</annulmentVerificationStatus>
+      <annulmentDecisionDate>2026-11-17T09:30:00.000Z</annulmentDecisionDate>
+      <annulmentDecisionUser>specuser0000002</annulmentDecisionUser>
+    </annulmentData>
+  </processingResults>
+</QueryTransactionStatusResponse>

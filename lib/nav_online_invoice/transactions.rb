@@ -8,6 +8,21 @@ module NavOnlineInvoice
       @client = client
     end
 
+    # Asks how NAV processed a submission.
+    #
+    # @example
+    #   status = client.transactions.status(transaction_id)
+    #   status&.accepted?
+    #   status&.results&.each { |result| puts result.status }
+    # @param transaction_id [String] the ID NAV returned for the submission
+    # @param return_original_request [Boolean] also return the submitted invoices, decoded
+    # @return [TransactionStatus, nil] nil if NAV knows no such transaction
+    # @raise [ArgumentError] if the transaction ID is malformed
+    # @raise [DecodeError] if a returned original request cannot be decoded
+    def status(transaction_id, return_original_request: false)
+      @client.execute(Operations::QueryTransactionStatus.new(transaction_id, return_original_request:))
+    end
+
     # Lists the submissions NAV received in a time range, one page at a time.
     #
     # Useful to find a transaction ID that was lost, e.g. after a timeout.
