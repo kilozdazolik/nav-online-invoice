@@ -106,4 +106,37 @@ RSpec.describe NavOnlineInvoice::Client do
     expect(log.string).to include("queryTaxpayer request: <?xml", "queryTaxpayer response: <?xml")
     expect(log.string).not_to include(config.password_hash, "specuser0000001")
   end
+
+  describe "rate limiting" do
+    november = Date.new(2026, 11, 1)..Date.new(2026, 11, 30)
+    day = Time.utc(2026, 11, 16)..Time.utc(2026, 11, 17)
+    {
+      "queryTaxpayer" => [true, ->(c) { c.taxpayers.query("12345678") }, "query_taxpayer/valid.xml"],
+      "queryInvoiceData" => [true, lambda { |c|
+        c.invoices.data("X", direction: :outbound)
+      }, "query_invoice_data/found.xml"],
+      "queryTransactionStatus" => [true, lambda { |c|
+        c.transactions.status("T1")
+      }, "query_transaction_status/processing.xml"],
+      "queryInvoiceDigest" => [false, ->(c) { c.invoices.digest(direction: :outbound, issue_date: november) },
+                               "query_invoice_digest/empty.xml"],
+      "queryInvoiceCheck" => [false, lambda { |c|
+        c.invoices.check("X", direction: :outbound)
+      }, "query_invoice_check/true.xml"],
+      "queryInvoiceChainDigest" => [false, ->(c) { c.invoices.chain_digest("X", direction: :outbound) },
+                                    "query_invoice_chain_digest/chain.xml"],
+      "queryTransactionList" => [false, lambda { |c|
+        c.transactions.list(ins_date: day)
+      }, "query_transaction_list/empty.xml"]
+    }.each do |operation, (limited, call, answer)|
+      it "#{limited ? "throttles" : "does not throttle"} #{operation}" do
+        stub_request(:post, "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/#{operation}")
+          .to_return(body: fixture("responses/#{answer}"))
+
+        call.call(client)
+
+        expect(throttle).to have_received(:wait).exactly(limited ? 1 : 0).times
+      end
+    end
+  end
 end
