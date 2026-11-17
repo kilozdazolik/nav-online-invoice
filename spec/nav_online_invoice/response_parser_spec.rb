@@ -61,6 +61,26 @@ RSpec.describe NavOnlineInvoice::ResponseParser do
     expect { parse("", status: 504) }.to raise_error(NavOnlineInvoice::TransportError, &:retryable?)
   end
 
+  it "treats an HTML page at 503 as maintenance and at 504 as retryable" do
+    page = "<html><body><h1>Service Unavailable</h1></body></html>"
+
+    expect { parse(page, status: 503) }.to raise_error(NavOnlineInvoice::MaintenanceError)
+    expect { parse(page, status: 504) }.to raise_error(NavOnlineInvoice::TransportError, &:retryable?)
+  end
+
+  it "handles a body that is not UTF-8" do
+    latin2 = "<html>szolg\xE1ltat\xE1s</html>".dup.force_encoding(Encoding::UTF_8)
+
+    expect { parse(latin2, status: 502) }.to raise_error(NavOnlineInvoice::TransportError, &:retryable?)
+  end
+
+  it "reads XML in the encoding its declaration names" do
+    body = fixture("responses/query_taxpayer/valid.xml").sub('encoding="UTF-8"', 'encoding="ISO-8859-2"')
+                                                        .encode(Encoding::ISO_8859_2).force_encoding(Encoding::UTF_8)
+
+    expect(parse(body).root.name).to eq("QueryTaxpayerResponse")
+  end
+
   it "rejects an unexpected root element" do
     expect { parse(%(<Other xmlns="#{NavOnlineInvoice::NAMESPACES["api"]}"/>)) }
       .to raise_error(NavOnlineInvoice::TransportError, /Unexpected Other/)

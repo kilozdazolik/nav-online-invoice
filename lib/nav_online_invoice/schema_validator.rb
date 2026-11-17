@@ -27,14 +27,19 @@ module NavOnlineInvoice
       # @param xml [String]
       # @return [Array<String>] empty if the XML is valid
       def errors(xml)
-        schema.validate(Nokogiri::XML(xml) { |config| config.strict.nonet }).map(&:message)
-      rescue Nokogiri::XML::SyntaxError => e
-        raise if e.message.include?(SCHEMA_PATH)
+        document, syntax_error = parse(xml)
+        return [syntax_error] if syntax_error
 
-        [e.message]
+        schema.validate(document).map(&:message)
       end
 
       private
+
+      def parse(xml)
+        [Nokogiri::XML(xml) { |config| config.strict.nonet }, nil]
+      rescue Nokogiri::XML::SyntaxError => e
+        [nil, e.message]
+      end
 
       def schema
         @schema || @mutex.synchronize do

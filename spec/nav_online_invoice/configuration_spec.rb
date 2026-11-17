@@ -58,6 +58,25 @@ RSpec.describe NavOnlineInvoice::Configuration do
     expect(output).to include("login=[FILTERED]", "tax_number=\"12345678\"")
   end
 
+  it "hides the credentials in pp, IRB and to_h" do
+    config = build_config
+
+    expect(config.pretty_inspect).not_to include("spec-signature-key", config.password_hash)
+    expect(config.to_h).to include(signature_key: "[FILTERED]", password_hash: "[FILTERED]", tax_number: "12345678")
+  end
+
+  it "replaces the password hash when #with gets a new password" do
+    config = build_config.with(password: "new-password")
+
+    expect(config.password_hash).to eq(NavOnlineInvoice::Crypto.password_hash("new-password"))
+  end
+
+  it "equals a configuration built from the same values" do
+    first = build_config
+
+    expect(build_config).to eq(first)
+  end
+
   it "is frozen and validates again on #with" do
     config = build_config
 
@@ -79,6 +98,23 @@ RSpec.describe NavOnlineInvoice::Configuration do
       config_attributes.each { |key, value| builder.public_send(:"#{key}=", value) }
 
       expect(builder.build.login).to eq("specuser0000001")
+    end
+
+    it "turns the throttle off when it is set to nil" do
+      builder = described_class.new
+      config_attributes(throttle: NavOnlineInvoice::Throttle.default).each do |key, value|
+        builder.public_send(:"#{key}=", value)
+      end
+      builder.throttle = nil
+
+      expect(builder.build.throttle).to be_nil
+    end
+
+    it "does not show the assigned values" do
+      builder = described_class.new
+      builder.password = "spec-password"
+
+      expect([builder.inspect, builder.pretty_inspect].join).not_to include("spec-password")
     end
 
     it "reports missing values as a configuration error" do

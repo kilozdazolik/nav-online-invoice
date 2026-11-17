@@ -1,13 +1,6 @@
 # frozen_string_literal: true
 
 module NavOnlineInvoice
-  # XML namespaces of the NAV API.
-  NAMESPACES = {
-    "api" => "http://schemas.nav.gov.hu/OSA/3.0/api",
-    "common" => "http://schemas.nav.gov.hu/NTCA/1.0/common",
-    "base" => "http://schemas.nav.gov.hu/OSA/3.0/base"
-  }.freeze
-
   # Builds the XML of a request: the shared header, user and software parts plus the operation's body.
   #
   # @api private

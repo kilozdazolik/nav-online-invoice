@@ -37,6 +37,9 @@ module NavOnlineInvoice
     SECRETS = %i[login password_hash signature_key exchange_key].freeze
     private_constant :SECRETS
 
+    DEFAULT_CLOCK = Time.method(:now)
+    private_constant :DEFAULT_CLOCK
+
     # @param environment [Symbol] +:test+ or +:production+; the two need separate technical users
     # @param login [String] the technical user's login
     # @param password [String, nil] the technical user's password (or give +password_hash+)
@@ -45,7 +48,8 @@ module NavOnlineInvoice
     # @param exchange_key [String, nil] the exchange key; only needed to submit invoices
     # @param tax_number [String] the technical user's company, 8 or 11 digits
     # @param software [Hash, Software] the software data NAV requires in every request
-    # @param logger [Logger, nil] gets one line per request; request XML only at debug level, redacted
+    # @param logger [Logger, nil] gets one line per request; at debug level also the request XML (credentials
+    #   hidden) and NAV's answer, which can contain personal data
     # @param throttle [#wait, nil] limits the request rate; nil turns it off
     # @param validate_requests [Boolean] check each request against NAV's schema before sending
     # @param max_retries [Integer] how often a temporary failure is retried
@@ -53,13 +57,14 @@ module NavOnlineInvoice
     # @param open_timeout [Numeric] seconds to wait for the connection
     # @param read_timeout [Numeric] seconds to wait for the answer
     # @param write_timeout [Numeric] seconds to wait while sending
-    # @param clock [#call] returns the current Time
+    # @param clock [#call] returns the current Time; for tests
     # @param request_id_generator [#call] returns a new request ID
-    # @raise [ConfigurationError] if a value is missing or has the wrong format
+    # @raise [ConfigurationError] if a value is empty or has the wrong format
+    # @raise [ArgumentError] if a required keyword is missing
     def initialize(environment:, login:, signature_key:, tax_number:, software:, password: nil, password_hash: nil,
                    exchange_key: nil, logger: nil, throttle: Throttle.default, validate_requests: true,
                    max_retries: 2, retry_base_delay: 1.0, open_timeout: 5, read_timeout: 60, write_timeout: 60,
-                   clock: -> { Time.now }, request_id_generator: RequestId)
+                   clock: DEFAULT_CLOCK, request_id_generator: RequestId)
       super(
         environment: Validation.environment(environment),
         login: Validation.login(login),
@@ -69,7 +74,7 @@ module NavOnlineInvoice
         tax_number: Validation.tax_number(tax_number),
         software: Validation.software(software),
         logger: logger,
-        throttle: throttle || nil,
+        throttle: throttle,
         validate_requests: validate_requests ? true : false,
         max_retries: Validation.non_negative_integer(:max_retries, max_retries),
         retry_base_delay: Validation.non_negative_number(:retry_base_delay, retry_base_delay),
@@ -81,18 +86,50 @@ module NavOnlineInvoice
       )
     end
 
+    # The URL of an operation in this environment.
+    #
     # @param operation_name [String] e.g. "queryTaxpayer"
-    # @return [URI::HTTPS] the URL of the operation in this environment
+    # @return [URI::HTTPS]
     def endpoint(operation_name)
       URI("#{ENDPOINTS.fetch(environment)}#{operation_name}")
     end
 
+    # Returns a copy with the given settings changed.
+    #
+    # Giving +password+ replaces the stored password hash.
+    def with(**changes)
+      return super unless changes.key?(:password)
+
+      self.class.new(**members.to_h { |name| [name, public_send(name)] }.except(:password_hash), **changes)
+    end
+
+    # Returns the settings with the credentials replaced by [FILTERED].
+    def to_h(&block)
+      hash = members.to_h { |name| [name, filtered(name)] }
+      block ? hash.to_h(&block) : hash
+    end
+
     # Shows the settings with the credentials hidden.
     def inspect
-      values = to_h.map { |key, value| "#{key}=#{SECRETS.include?(key) && value ? Redactor::FILTERED : value.inspect}" }
+      values = members.map { |name| "#{name}=#{secret?(name) ? Redactor::FILTERED : public_send(name).inspect}" }
       "#<data #{self.class.name} #{values.join(", ")}>"
     end
     alias to_s inspect
+
+    # Used by +pp+, IRB and the Rails console.
+    def pretty_print(printer)
+      printer.text(inspect)
+    end
+
+    private
+
+    def filtered(name)
+      secret?(name) ? Redactor::FILTERED : public_send(name)
+    end
+
+    def secret?(name)
+      SECRETS.include?(name) && !public_send(name).nil?
+    end
 
     # Software data sent in every request.
     #
@@ -111,6 +148,8 @@ module NavOnlineInvoice
     end
 
     # Collects settings for {NavOnlineInvoice.configure}.
+    #
+    # Only the settings that were assigned are passed on, so +throttle = nil+ turns the throttle off.
     class Builder
       ATTRIBUTES = %i[
         environment login password password_hash signature_key exchange_key tax_number software logger throttle
@@ -118,13 +157,33 @@ module NavOnlineInvoice
         request_id_generator
       ].freeze
 
-      attr_accessor(*ATTRIBUTES)
+      def initialize
+        @values = {}
+      end
 
+      ATTRIBUTES.each do |name|
+        define_method(name) { @values[name] }
+        define_method(:"#{name}=") { |value| @values[name] = value }
+      end
+
+      # Creates the configuration from the assigned settings.
+      #
       # @return [Configuration]
+      # @raise [ConfigurationError] if a setting is missing or invalid
       def build
-        Configuration.new(**ATTRIBUTES.to_h { |name| [name, public_send(name)] }.compact)
+        Configuration.new(**@values)
       rescue ArgumentError => e
         raise ConfigurationError, e.message
+      end
+
+      # Shows the assigned setting names only, never their values.
+      def inspect
+        "#<#{self.class.name} assigned=#{@values.keys.inspect}>"
+      end
+      alias to_s inspect
+
+      def pretty_print(printer)
+        printer.text(inspect)
       end
     end
 
@@ -162,7 +221,7 @@ module NavOnlineInvoice
 
       def software(value)
         software = value.is_a?(Hash) ? Software.new(**value) : value
-        raise ConfigurationError, "software must be a Hash" unless software.is_a?(Software)
+        raise ConfigurationError, "software must be a Hash or Configuration::Software" unless software.is_a?(Software)
 
         software_id(software.id)
         software_operation(software.operation)

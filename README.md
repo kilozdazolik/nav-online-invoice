@@ -13,7 +13,8 @@ Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** 
 - **Few dependencies.** `Net::HTTP` and `openssl` from the standard library; the only runtime dependency is
   `nokogiri`, which ships precompiled for Linux, macOS and Windows.
 - **Safe by default.** Every request gets a fresh request ID and signature (also on retry), outgoing XML is checked
-  against NAV's official schemas, requests are rate limited, and credentials never appear in logs or `inspect`.
+  against NAV's official schemas, requests are rate limited, and credentials are hidden in logs, `inspect`, `pp`
+  and `to_h`.
 - **Typed errors.** Errors are mapped from NAV's `errorCode` and tell you whether trying again makes sense.
 
 ## Requirements
@@ -38,6 +39,7 @@ gem install nav_online_invoice
 
 ```ruby
 require "nav_online_invoice"
+require "logger" # only for the logger below; on Ruby 4.0 add the logger gem to your Gemfile
 
 config = NavOnlineInvoice::Configuration.new(
   environment: :test,                 # :test or :production
@@ -62,6 +64,7 @@ client = NavOnlineInvoice::Client.new(config)
 result = client.taxpayers.query("12345678-2-42")
 
 result.valid?                         # => true if the tax number exists
+result.matches?("12345678-2-42")      # => true if the VAT and county codes match too
 result.taxpayer.name                  # => "EXAMPLE KFT."
 result.taxpayer.tax_number            # => "12345678-2-42"
 result.taxpayer.incorporation         # => :organization, :self_employed or :taxable_person
@@ -69,7 +72,8 @@ result.taxpayer.headquarters.city     # addresses: :hq, :site or :branch
 result.request_id                     # for your logs
 ```
 
-An unknown tax number is not an error: `valid?` is `false` and `taxpayer` is `nil`.
+An unknown tax number is not an error: `valid?` is `false` and `taxpayer` is `nil`. NAV checks only the first 8
+digits, so `valid?` is also true for `12345678-9-99`; use `matches?` to check a full tax number.
 
 The gem never reads environment variables or Rails credentials; pass the values in. Keep one `Client` per technical
 user and reuse it; it is thread-safe.
@@ -107,6 +111,8 @@ NavOnlineInvoice.client.taxpayers.query("12345678")
 | `validate_requests` | `true` | check each request against NAV's schema before sending |
 | `logger` | `nil` | one line per request at `info`; request and response XML at `debug` |
 | `request_id_generator` | `NavOnlineInvoice::RequestId` | any object with `call` |
+| `exchange_key` | `nil` | only needed to submit invoices (not supported yet) |
+| `clock` | `Time.method(:now)` | any object with `call` returning a `Time`; for tests |
 
 For an interactive lookup, e.g. on a form, use a shorter `read_timeout` and fewer retries:
 `config.with(read_timeout: 10, max_retries: 0)`.

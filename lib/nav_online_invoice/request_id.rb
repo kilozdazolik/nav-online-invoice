@@ -10,6 +10,8 @@ module NavOnlineInvoice
   module RequestId
     module_function
 
+    # Returns a new request ID.
+    #
     # @param prefix [String]
     # @return [String]
     def call(prefix: "NOI")

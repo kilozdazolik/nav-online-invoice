@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     nav_online_invoice (0.1.0)
-      nokogiri (>= 1.16)
+      nokogiri (>= 1.16, < 2)
 
 GEM
   remote: https://rubygems.org/

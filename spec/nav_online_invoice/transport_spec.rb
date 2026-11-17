@@ -41,6 +41,15 @@ RSpec.describe NavOnlineInvoice::Transport do
       .to raise_error(NavOnlineInvoice::TransportError) { |error| expect(error).not_to be_retryable }
   end
 
+  it "wraps errors of a broken response" do
+    [Zlib::DataError.new("incorrect header check"), Net::HTTPHeaderSyntaxError.new("wrong Content-Length")]
+      .each do |error|
+        stub_request(:post, uri).to_raise(error)
+
+        expect { transport.post(uri, "<request/>") }.to raise_error(NavOnlineInvoice::TransportError)
+      end
+  end
+
   it "sends the request only once" do
     stub_request(:post, uri).to_raise(EOFError)
 

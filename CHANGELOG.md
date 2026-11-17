@@ -11,8 +11,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - `client.taxpayers.query`: tax number lookup (`queryTaxpayer`), returning the taxpayer's name, tax number,
-  incorporation type and addresses.
-- `NavOnlineInvoice::Configuration`: immutable, validated per-client settings; credentials hidden in `inspect`.
+  incorporation type and addresses. `TaxpayerResult#matches?` checks a full 11-digit tax number.
+- `NavOnlineInvoice::Configuration`: immutable, validated per-client settings; credentials hidden in `inspect`,
+  `pp` and `to_h`.
 - `NavOnlineInvoice.configure` and `NavOnlineInvoice.client` for a single global configuration.
 - Request signing (SHA-512 password hash, SHA3-512 request signature), checked against NAV's official examples.
 - Validation of every request against NAV's XSD schemas, bundled in `schemas/`.

@@ -6,9 +6,11 @@ require "openssl"
 require "securerandom"
 require "time"
 require "uri"
+require "zlib"
 
 require_relative "nav_online_invoice/version"
 require_relative "nav_online_invoice/errors"
+require_relative "nav_online_invoice/namespaces"
 require_relative "nav_online_invoice/schema_validator"
 require_relative "nav_online_invoice/crypto"
 require_relative "nav_online_invoice/request_id"
@@ -19,10 +21,15 @@ require_relative "nav_online_invoice/configuration"
 require_relative "nav_online_invoice/request_builder"
 require_relative "nav_online_invoice/transport"
 require_relative "nav_online_invoice/response_parser"
-require_relative "nav_online_invoice/models"
+require_relative "nav_online_invoice/address"
+require_relative "nav_online_invoice/taxpayer"
+require_relative "nav_online_invoice/taxpayer_result"
 require_relative "nav_online_invoice/operations/query_taxpayer"
+require_relative "nav_online_invoice/taxpayers"
 require_relative "nav_online_invoice/client"
 
+# Client for the Hungarian Tax Authority's (NAV) Online Invoice API v3.0.
+#
 # Each client gets its own configuration, so one application can call the
 # Online Invoice API for several companies.
 #
@@ -43,6 +50,8 @@ module NavOnlineInvoice
     # @return [Configuration]
     # @raise [ConfigurationError]
     def configure
+      raise ArgumentError, "NavOnlineInvoice.configure needs a block" unless block_given?
+
       builder = Configuration::Builder.new
       yield builder
       configuration = builder.build
@@ -53,15 +62,29 @@ module NavOnlineInvoice
       configuration
     end
 
+    # The configuration set with {configure}.
+    #
     # @return [Configuration]
     # @raise [ConfigurationError] if {configure} has not been called
     def configuration
       @configuration || raise(ConfigurationError, "call NavOnlineInvoice.configure first")
     end
 
-    # @return [Client] a client for the global configuration
+    # A shared client for the configuration set with {configure}.
+    #
+    # @return [Client]
     def client
       @client || @mutex.synchronize { @client ||= Client.new(configuration) }
+    end
+
+    # Forgets the global configuration and client.
+    #
+    # @api private
+    def reset!
+      @mutex.synchronize do
+        @configuration = nil
+        @client = nil
+      end
     end
   end
 end

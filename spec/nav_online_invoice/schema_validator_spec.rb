@@ -18,4 +18,14 @@ RSpec.describe NavOnlineInvoice::SchemaValidator do
   it "reports malformed XML" do
     expect(described_class.errors("<QueryTaxpayerRequest>")).not_to be_empty
   end
+
+  describe "response fixtures" do
+    Dir[File.join(FixtureHelpers::FIXTURE_DIR, "responses/**/*.xml")].each do |path|
+      name = path.delete_prefix("#{FixtureHelpers::FIXTURE_DIR}/")
+
+      it "accepts #{name}" do
+        expect(File.read(path)).to be_valid_nav_xml
+      end
+    end
+  end
 end

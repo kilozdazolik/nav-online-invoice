@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# CI row that runs the suite with Rails loaded (for the optional Railtie).
+# CI row that checks the gem alongside Rails 8.1 (railties installed in the same bundle).
 eval_gemfile "../Gemfile"
 
 gem "railties", "~> 8.1.0"

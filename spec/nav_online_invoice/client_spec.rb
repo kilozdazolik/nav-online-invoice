@@ -18,11 +18,6 @@ RSpec.describe NavOnlineInvoice::Client do
     { status:, body: fixture("responses/#{path}") }
   end
 
-  def sent_request_ids
-    WebMock::RequestRegistry.instance.requested_signatures.hash.keys
-                            .map { |signature| signature.body[/<common:requestId>(\w+)</, 1] }
-  end
-
   it "looks up a taxpayer" do
     stub_request(:post, endpoint).to_return(nav_answer("query_taxpayer/valid.xml"))
 
@@ -44,13 +39,17 @@ RSpec.describe NavOnlineInvoice::Client do
   end
 
   it "retries a temporary failure with a new request ID" do
-    stub_request(:post, endpoint).to_return(nav_answer("general_error/operation_failed.xml", status: 500))
-                                 .then.to_return(nav_answer("query_taxpayer/valid.xml"))
+    sent_ids = []
+    answers = [nav_answer("general_error/operation_failed.xml", status: 500), nav_answer("query_taxpayer/valid.xml")]
+    stub_request(:post, endpoint).to_return do |request|
+      sent_ids << request.body[/<common:requestId>(\w+)</, 1]
+      answers.shift
+    end
 
     result = client.taxpayers.query("12345678")
 
     expect(result.request_id).to eq("RID2")
-    expect(sent_request_ids).to contain_exactly("RID1", "RID2")
+    expect(sent_ids).to eq(%w[RID1 RID2])
     expect(throttle).to have_received(:wait).with("queryTaxpayer").twice
   end
 

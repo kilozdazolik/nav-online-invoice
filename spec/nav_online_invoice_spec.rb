@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe NavOnlineInvoice do
-  after do
-    described_class.instance_variable_set(:@configuration, nil)
-    described_class.instance_variable_set(:@client, nil)
-  end
+  after { described_class.reset! }
 
   def configure_globally(**overrides)
     described_class.configure do |config|
@@ -14,6 +11,10 @@ RSpec.describe NavOnlineInvoice do
 
   it "has a semantic version number" do
     expect(NavOnlineInvoice::VERSION).to match(/\A\d+\.\d+\.\d+\z/)
+  end
+
+  it "requires a block for configure" do
+    expect { described_class.configure }.to raise_error(ArgumentError, /block/)
   end
 
   it "requires configure before the global client is used" do

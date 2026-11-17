@@ -26,7 +26,7 @@ bin/dev bundle exec rake schemas:sync
 ```
 
 Change the pinned commits in `rakelib/schemas.rake` first. The task prints the sha256 of each file; update the
-table below.
+checksums below.
 
 ## Checksums (after modification)
 

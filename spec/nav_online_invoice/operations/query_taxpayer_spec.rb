@@ -45,8 +45,20 @@ RSpec.describe NavOnlineInvoice::Operations::QueryTaxpayer do
     expect(result).to have_attributes(valid?: false, validity: nil, info_date: nil)
   end
 
-  it "does not show the raw XML in inspect" do
-    expect(parse("valid.xml").inspect).not_to include("<?xml")
+  it "does not show the raw XML in inspect or pp" do
+    result = parse("valid.xml")
+
+    expect(result.inspect).not_to include("<?xml")
+    expect(result.pretty_inspect).not_to include("<?xml")
+  end
+
+  it "checks a full tax number against NAV's data" do
+    result = parse("valid.xml")
+
+    expect(result.matches?("12345678-2-42")).to be(true)
+    expect(result.matches?("12345678")).to be(true)
+    expect(result.matches?("12345678-1-42")).to be(false)
+    expect(parse("invalid.xml").matches?("12345678")).to be(false)
   end
 
   it "sends the 8-digit tax number" do

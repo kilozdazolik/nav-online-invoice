@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb", "schemas/**/*", "LICENSE.txt", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "nokogiri", ">= 1.16"
+  spec.add_dependency "nokogiri", ">= 1.16", "< 2"
 end

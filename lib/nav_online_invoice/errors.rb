@@ -26,6 +26,7 @@ module NavOnlineInvoice
     # @return [Array<String>] the schema validation messages
     attr_reader :errors
 
+    # @param errors [Array<String>] the schema validation messages
     def initialize(errors)
       @errors = errors
       super("Request does not match the NAV schema: #{errors.first(3).join("; ")}")
@@ -37,6 +38,9 @@ module NavOnlineInvoice
     # @return [Integer, nil] the HTTP status, if a response arrived
     attr_reader :http_status
 
+    # @param message [String]
+    # @param http_status [Integer, nil]
+    # @param retryable [Boolean]
     def initialize(message, http_status: nil, retryable: true)
       @http_status = http_status
       @retryable = retryable
@@ -54,6 +58,13 @@ module NavOnlineInvoice
   # a plain ApiError.
   class ApiError < Error
     # One schema violation reported by NAV in a GeneralErrorResponse.
+    #
+    # @!attribute result_code
+    #   @return [String] "ERROR" or "CRITICAL"
+    # @!attribute error_code
+    #   @return [String, nil]
+    # @!attribute message
+    #   @return [String, nil] the element, its value and the expected value
     TechnicalValidationMessage = Data.define(:result_code, :error_code, :message)
 
     # @return [String, nil] NAV's errorCode, e.g. "FORBIDDEN"
@@ -69,6 +80,7 @@ module NavOnlineInvoice
 
     # Returns the error class for a NAV errorCode.
     #
+    # @api private
     # @param code [String, nil]
     # @return [Class<ApiError>]
     def self.for(code)
@@ -77,6 +89,11 @@ module NavOnlineInvoice
       CODES.fetch(code.to_s, ApiError)
     end
 
+    # @param code [String, nil] NAV's errorCode
+    # @param nav_message [String, nil] NAV's error text
+    # @param request_id [String, nil]
+    # @param http_status [Integer, nil]
+    # @param technical_validation_messages [Array<TechnicalValidationMessage>]
     def initialize(code:, nav_message: nil, request_id: nil, http_status: nil, technical_validation_messages: [])
       @code = code
       @nav_message = nav_message

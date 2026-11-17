@@ -9,7 +9,8 @@ module NavOnlineInvoice
     Response = Data.define(:status, :body)
 
     NETWORK_ERRORS = [
-      Timeout::Error, SocketError, SystemCallError, IOError, EOFError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse
+      Timeout::Error, SocketError, SystemCallError, IOError, EOFError, OpenSSL::SSL::SSLError,
+      Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Zlib::Error
     ].freeze
     private_constant :NETWORK_ERRORS
 
