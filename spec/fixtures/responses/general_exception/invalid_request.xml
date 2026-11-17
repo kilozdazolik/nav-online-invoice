@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:GeneralExceptionResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/api" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common">
+  <ns2:funcCode>ERROR</ns2:funcCode>
+  <ns2:errorCode>INVALID_REQUEST</ns2:errorCode>
+  <ns2:message>Helytelen kérés!</ns2:message>
+</ns2:GeneralExceptionResponse>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<GeneralErrorResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/api" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common" xmlns:ns3="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <ns2:header>
+    <ns2:requestId>NOI0000000001TEST0001</ns2:requestId>
+    <ns2:timestamp>2026-11-17T10:00:00.000Z</ns2:timestamp>
+    <ns2:requestVersion>3.0</ns2:requestVersion>
+    <ns2:headerVersion>1.0</ns2:headerVersion>
+  </ns2:header>
+  <ns2:result>
+    <ns2:funcCode>ERROR</ns2:funcCode>
+    <ns2:errorCode>INVALID_REQUEST</ns2:errorCode>
+    <ns2:message>Helytelen kérés!</ns2:message>
+  </ns2:result>
+  <software>
+    <softwareId>HU12345678TEST-001</softwareId>
+    <softwareName>Spec Suite</softwareName>
+    <softwareOperation>LOCAL_SOFTWARE</softwareOperation>
+    <softwareMainVersion>1.0</softwareMainVersion>
+    <softwareDevName>Example Developer</softwareDevName>
+    <softwareDevContact>dev@example.com</softwareDevContact>
+  </software>
+  <technicalValidationMessages>
+    <ns2:validationResultCode>ERROR</ns2:validationResultCode>
+    <ns2:validationErrorCode>SCHEMA_VIOLATION</ns2:validationErrorCode>
+    <ns2:message>taxNumber: value does not match pattern [0-9]{8}</ns2:message>
+  </technicalValidationMessages>
+</GeneralErrorResponse>
