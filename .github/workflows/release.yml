@@ -35,7 +35,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
 
       - name: Build gem
-        run: gem build nav_online_invoice.gemspec --output pkg.gem
+        run: gem build nav_online_invoice.gemspec --output "nav_online_invoice-${GITHUB_REF_NAME#v}.gem"
 
       - name: Exchange OIDC token for a RubyGems API key
         run: |
@@ -58,4 +58,30 @@ jobs:
           RUBY
 
       - name: Push gem to RubyGems.org
-        run: gem push pkg.gem
+        run: gem push "nav_online_invoice-${GITHUB_REF_NAME#v}.gem"
+
+  # Separate job, so the write permission is never held next to the RubyGems key.
+  github-release:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          ruby -e '
+            version = ENV.fetch("TAG").delete_prefix("v")
+            notes = File.read("CHANGELOG.md")[/^## \[#{Regexp.escape(version)}\][^\n]*\n(.*?)(?=^## \[|^\[[^\]]+\]: |\z)/m, 1].to_s.strip
+            abort "CHANGELOG.md has no notes for #{version}" if notes.empty?
+            File.write("release_notes.md", "#{notes}\n")
+          '
+      - name: Create GitHub release
+        run: gh release create "$TAG" --verify-tag --title "$TAG" --notes-file release_notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}

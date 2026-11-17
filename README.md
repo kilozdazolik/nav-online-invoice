@@ -1,9 +1,12 @@
 # nav_online_invoice
 
+[![Gem Version](https://badge.fury.io/rb/nav_online_invoice.svg)](https://rubygems.org/gems/nav_online_invoice)
+[![CI](https://github.com/kilozdazolik/nav-online-invoice/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kilozdazolik/nav-online-invoice/actions/workflows/ci.yml)
+
 Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** (*Online Számla*).
 
-> **Status: early development.** The next release provides `queryTaxpayer` (tax number lookup). Invoice queries
-> and invoice submission follow later.
+> **Status:** version 0.1 supports `queryTaxpayer` (tax number lookup). Invoice queries and invoice submission
+> follow in later versions. The API may change before 1.0.
 
 - **Plain Ruby, Rails optional.** Works in any Ruby process.
 - **Per-client configuration.** One process can call NAV for several companies, each with its own technical user.
@@ -21,9 +24,14 @@ Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** 
 
 ## Installation
 
-```ruby
-# Gemfile
-gem "nav_online_invoice"
+```sh
+bundle add nav_online_invoice
+```
+
+Or without Bundler:
+
+```sh
+gem install nav_online_invoice
 ```
 
 ## Usage
@@ -174,8 +182,18 @@ to update them.
 
 1. Update `VERSION` in `lib/nav_online_invoice/version.rb` and add a matching section to `CHANGELOG.md`.
 2. Run `bin/dev bundle exec rake release:check`.
-3. Tag and push: `git tag v0.1.0 && git push origin v0.1.0`. GitHub Actions publishes the gem to RubyGems
-   via trusted publishing.
+3. Commit (`Release 0.1.0`), push and wait for CI.
+4. Tag and push: `git tag -a v0.1.0 -m "Version 0.1.0" && git push origin v0.1.0`. GitHub Actions publishes the
+   gem to RubyGems via trusted publishing and creates the GitHub release from the CHANGELOG section.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at <https://github.com/kilozdazolik/nav-online-invoice>.
+Please never include real NAV credentials or taxpayer data in issues, fixtures or logs.
 
 ## References
 
