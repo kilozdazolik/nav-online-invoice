@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "logger"
+
 RSpec.describe NavOnlineInvoice do
   after { described_class.reset! }
 
@@ -38,5 +40,31 @@ RSpec.describe NavOnlineInvoice do
 
     expect(described_class.client).not_to be(first)
     expect(described_class.client.config.environment).to eq(:production)
+  end
+
+  describe ".default_logger" do
+    let(:logger) { Logger.new(File::NULL) }
+
+    after { described_class.default_logger = nil }
+
+    it "is the logger of configurations that set none" do
+      described_class.default_logger = logger
+
+      expect(build_config.logger).to be(logger)
+      expect(configure_globally.logger).to be(logger)
+    end
+
+    it "gives way to a logger that is set, or to nil to log nothing" do
+      described_class.default_logger = logger
+      own = Logger.new(File::NULL)
+
+      expect(build_config(logger: own).logger).to be(own)
+      expect(build_config(logger: nil).logger).to be_nil
+      expect(configure_globally(logger: nil).logger).to be_nil
+    end
+
+    it "is nil unless set" do
+      expect(build_config.logger).to be_nil
+    end
   end
 end

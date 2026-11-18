@@ -79,6 +79,11 @@ module NavOnlineInvoice
   @mutex = Mutex.new
 
   class << self
+    # The logger of every configuration that does not set one, e.g. the Rails logger. Nil by default.
+    #
+    # @return [Logger, nil]
+    attr_accessor :default_logger
+
     # Sets the configuration used by {client}. For several companies, create one {Client} per company instead.
     #
     # @example

@@ -40,6 +40,10 @@ module NavOnlineInvoice
     DEFAULT_CLOCK = Time.method(:now)
     private_constant :DEFAULT_CLOCK
 
+    # Stands for a logger that was not given, so an explicit nil can still turn logging off.
+    DEFAULT_LOGGER = Object.new.freeze
+    private_constant :DEFAULT_LOGGER
+
     # @param environment [Symbol] +:test+ or +:production+; the two need separate technical users
     # @param login [String] the technical user's login
     # @param password [String, nil] the technical user's password (or give +password_hash+)
@@ -48,7 +52,8 @@ module NavOnlineInvoice
     # @param exchange_key [String, nil] the exchange key, 16 characters; only needed to submit invoices
     # @param tax_number [String] the technical user's company, 8 or 11 digits
     # @param software [Hash, Software] the software data NAV requires in every request
-    # @param logger [Logger, nil] gets one line per request, without any content
+    # @param logger [Logger, nil] gets one line per request, without any content; {NavOnlineInvoice.default_logger}
+    #   if not given, nil for none
     # @param log_payloads [Boolean] also log request and response XML at debug level, with credentials and
     #   invoice data hidden; never in production, since it still contains names, addresses and amounts
     # @param throttle [#wait, nil] limits the request rate; nil turns it off
@@ -63,7 +68,7 @@ module NavOnlineInvoice
     # @raise [ConfigurationError] if a value is empty or has the wrong format
     # @raise [ArgumentError] if a required keyword is missing
     def initialize(environment:, login:, signature_key:, tax_number:, software:, password: nil, password_hash: nil,
-                   exchange_key: nil, logger: nil, log_payloads: false, throttle: Throttle.default,
+                   exchange_key: nil, logger: DEFAULT_LOGGER, log_payloads: false, throttle: Throttle.default,
                    validate_requests: true, max_retries: 2, retry_base_delay: 1.0, open_timeout: 5, read_timeout: 60,
                    write_timeout: 60,
                    clock: DEFAULT_CLOCK, request_id_generator: RequestId)
@@ -75,7 +80,7 @@ module NavOnlineInvoice
         exchange_key: Validation.exchange_key(exchange_key),
         tax_number: Validation.tax_number(tax_number),
         software: Validation.software(software),
-        logger: logger,
+        logger: logger.equal?(DEFAULT_LOGGER) ? NavOnlineInvoice.default_logger : logger,
         log_payloads: log_payloads ? true : false,
         throttle: throttle,
         validate_requests: validate_requests ? true : false,
