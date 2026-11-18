@@ -75,6 +75,13 @@ RSpec.describe NavOnlineInvoice::SubmissionItems do
         .to eq(value: NavOnlineInvoice::Crypto.electronic_invoice_hash(items.first.data), crypto_type: "SHA3-512")
     end
 
+    it "is recognized when the indicator is written as 1" do
+      one = complete_xml.sub("<completenessIndicator>true<", "<completenessIndicator>1<")
+      items, = prepare([{ operation: :create, xml: one }])
+
+      expect(items.first.electronic_invoice_hash).to include(crypto_type: "SHA3-512")
+    end
+
     it "is never compressed" do
       expect(prepare([{ operation: :create, xml: complete_xml }]).last).to be(false)
       expect { prepare([{ operation: :create, xml: complete_xml }], compress: true) }

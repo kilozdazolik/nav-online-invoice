@@ -195,6 +195,13 @@ RSpec.describe NavOnlineInvoice::Client do
       end
     end
 
+    it "treats a 4xx without a NAV answer as rejected, since the server did not process it" do
+      stub_request(:post, submit_endpoint).to_return(status: 404, body: "")
+
+      expect { submit }.to raise_error(NavOnlineInvoice::TransportError) { |error| expect(error.http_status).to eq(404) }
+      expect(a_request(:post, submit_endpoint)).to have_been_made.once
+    end
+
     it "raises the NAV error of a rejected submission, without sending again" do
       stub_request(:post, submit_endpoint).to_return(nav_answer("general_error/operation_failed.xml", status: 500))
 

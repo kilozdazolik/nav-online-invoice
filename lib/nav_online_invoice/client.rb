@@ -108,10 +108,13 @@ module NavOnlineInvoice
                               item_count: operation.index_hashes.size)
     end
 
-    # A NAV error answer means the submission was rejected. Without one, it may have arrived: a 503 without a
-    # NAV body can come from a network device while NAV is still processing.
+    # A NAV error answer means the submission was rejected, and so does a 4xx without one: the server answered
+    # without processing it. Otherwise it may have arrived: a 502, 503 or 504 can come from a network device while
+    # NAV is still processing.
     def outcome_unknown?(error)
-      error.is_a?(TransportError) ? error.request_sent? : error.code.nil?
+      return error.code.nil? unless error.is_a?(TransportError)
+
+      error.request_sent? && !(400..499).cover?(error.http_status)
     end
 
     def build_request(operation)

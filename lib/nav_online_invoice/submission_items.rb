@@ -40,11 +40,16 @@ module NavOnlineInvoice
 
       xml = xml(item[:xml], name)
       SchemaValidator.validate!(xml, schema: :data) if validate
-      document = Nokogiri::XML(xml)
-      complete = document.at_xpath("/*/*[local-name()='completenessIndicator']")&.text == "true"
+      complete = complete?(xml)
       Invoice.new(operation: Params.enum(:"#{name}[:operation]", item[:operation], OPERATIONS), xml:,
                   electronic_invoice_hash: electronic_invoice_hash(item[:electronic_invoice_hash], name, complete),
                   complete:)
+    end
+
+    # Whether the XML is the electronic invoice itself; xs:boolean is true for "true" and "1".
+    def complete?(xml)
+      indicator = Nokogiri::XML(xml, &:nonet).at_xpath("/*/*[local-name()='completenessIndicator']")
+      %w[true 1].include?(indicator&.text&.strip)
     end
 
     def xml(value, name)
