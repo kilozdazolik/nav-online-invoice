@@ -25,17 +25,28 @@ module NavOnlineInvoice
     # @return [Response]
     # @raise [TransportError] if no answer arrived
     def post(uri, body)
+      perform(uri, request(Net::HTTP::Post, uri, body))
+    end
+
+    # @param uri [URI::HTTPS]
+    # @return [Response]
+    # @raise [TransportError] if no answer arrived
+    def get(uri)
+      perform(uri, request(Net::HTTP::Get, uri, nil))
+    end
+
+    private
+
+    def perform(uri, request)
       connected = false
       response = http(uri).start do |connection|
         connected = true
-        connection.request(request(uri, body))
+        connection.request(request)
       end
       Response.new(status: response.code.to_i, body: response.body.to_s.dup.force_encoding(Encoding::UTF_8))
     rescue *NETWORK_ERRORS => e
       raise transport_error(e, request_sent: connected)
     end
-
-    private
 
     # A failure while connecting (DNS, refused, open timeout, TLS) means nothing was sent.
     def transport_error(error, request_sent:)
@@ -55,12 +66,13 @@ module NavOnlineInvoice
       end
     end
 
-    def request(uri, body)
-      Net::HTTP::Post.new(uri).tap do |request|
+    # NAV asks for the XML content type on GET requests too (spec 8.1.3).
+    def request(klass, uri, body)
+      klass.new(uri).tap do |request|
         request["Content-Type"] = "application/xml; charset=UTF-8"
         request["Accept"] = "application/xml"
         request["User-Agent"] = "nav_online_invoice/#{VERSION} Ruby/#{RUBY_VERSION}"
-        request.body = body
+        request.body = body if body
       end
     end
   end

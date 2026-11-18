@@ -72,4 +72,11 @@ RSpec.describe NavOnlineInvoice::Transport do
     expect { transport.post(uri, "<request/>") }
       .to raise_error(NavOnlineInvoice::TransportError, &:request_sent?)
   end
+
+  it "gets a resource without a body" do
+    stub_request(:get, uri).with(headers: { "Accept" => "application/xml" }).to_return(status: 200, body: "<ok/>")
+
+    expect(transport.get(uri)).to eq(described_class::Response.new(status: 200, body: "<ok/>"))
+    expect(a_request(:get, uri).with { |request| request.body.to_s.empty? }).to have_been_made.once
+  end
 end
