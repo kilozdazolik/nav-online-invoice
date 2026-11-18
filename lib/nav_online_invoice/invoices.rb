@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module NavOnlineInvoice
-  # Invoice queries. Use through {Client#invoices}.
+  # Invoice queries and submissions. Use through {Client#invoices}.
   class Invoices
     # @api private
     def initialize(client)
@@ -113,6 +113,49 @@ module NavOnlineInvoice
     def data(invoice_number, direction:, batch_index: nil, supplier_tax_number: nil)
       @client.execute(Operations::QueryInvoiceData.new(invoice_number, direction:, batch_index:,
                                                                        supplier_tax_number:))
+    end
+
+    # Submits up to 100 finished invoices to NAV.
+    #
+    # Each call requests its own exchange token and sends the invoices once; it never retries. A NAV error means
+    # nothing was stored, so the invoices can be sent again. {UnknownOutcomeError} means they may have arrived:
+    # do not resend them before {Transactions#reconcile} says they did not.
+    #
+    # @example
+    #   submission = client.invoices.submit([{ operation: :create, xml: invoice_xml }])
+    #   status = client.transactions.wait(submission.transaction_id)
+    #   status.accepted?
+    # @param items [Array<Hash>] in index order, each with:
+    #   +:operation+ (+:create+, +:modify+ or +:storno+), +:xml+ (the InvoiceData XML) and optionally
+    #   +:electronic_invoice_hash+ (+{ value:, crypto_type: "SHA3-512" or "SHA-256" }+, the hash of your own
+    #   electronic invoice file; computed by the gem when the XML has completenessIndicator true)
+    # @param compress [Boolean, :auto] gzip the invoices; +:auto+ only when the request would be too large
+    # @return [Submission]
+    # @raise [ConfigurationError] if the configuration has no exchange_key
+    # @raise [ArgumentError, SchemaValidationError, SubmissionTooLargeError] before any request is sent
+    # @raise [UnknownOutcomeError] if no answer arrived
+    def submit(items, compress: :auto)
+      exchange_key = @client.config.exchange_key
+      raise ConfigurationError, "exchange_key is required to submit invoices" unless exchange_key
+
+      prepared, compressed = SubmissionItems.prepare(items, compress:, validate: @client.config.validate_requests)
+      with_token(exchange_key) { |token| Operations::ManageInvoice.new(token:, items: prepared, compressed:) }
+    end
+
+    private
+
+    # Requests a token and sends the operation built with it. A token that expired while the request waited for the
+    # throttle is replaced once; nothing was sent with it.
+    def with_token(exchange_key)
+      renewed = false
+      begin
+        @client.execute(yield(@client.execute(Operations::TokenExchange.new(exchange_key))))
+      rescue ExchangeTokenError => e
+        raise if e.code || renewed
+
+        renewed = true
+        retry
+      end
     end
   end
 end

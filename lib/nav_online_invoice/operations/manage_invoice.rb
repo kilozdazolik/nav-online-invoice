@@ -60,9 +60,11 @@ module NavOnlineInvoice
         end
       end
 
-      # @return [String] the transaction ID; NAV processes the invoices afterwards
-      def parse(document, **)
-        text(document.root, "api:transactionId")
+      # @return [Submission] NAV processes the invoices afterwards
+      def parse(document, request_id:, **)
+        Submission.new(transaction_id: text(document.root, "api:transactionId"), request_id:,
+                       item_count: @items.size, compressed: @compressed,
+                       electronic_invoice_hashes: @items.map { |item| item.electronic_invoice_hash&.fetch(:value) })
       end
 
       # Leaves out the token and the invoices.

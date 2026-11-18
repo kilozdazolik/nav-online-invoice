@@ -36,6 +36,15 @@ module NavOnlineInvoice
       sha3("#{operation}#{base64_data}")
     end
 
+    # Returns the electronicInvoiceHash of an invoice whose data is the electronic invoice itself
+    # (completenessIndicator): the SHA3-512 of the base64 data exactly as sent.
+    #
+    # @param base64_data [String]
+    # @return [String]
+    def electronic_invoice_hash(base64_data)
+      sha3(base64_data)
+    end
+
     # Decrypts the exchange token that tokenExchange returns.
     #
     # @param encoded [String] the encodedExchangeToken value, Base64

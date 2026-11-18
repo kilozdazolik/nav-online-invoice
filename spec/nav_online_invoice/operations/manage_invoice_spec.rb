@@ -64,10 +64,14 @@ RSpec.describe NavOnlineInvoice::Operations::ManageInvoice do
 
   it "reads the transaction ID" do
     xml = fixture("responses/manage_invoice/ok.xml")
-    operation = described_class.new(token:, items: [item], compressed: false)
+    items = [item, item("MODIFY", "QUJD", { value: "AB", crypto_type: "SHA-256" })]
+    operation = described_class.new(token:, items:, compressed: false)
 
     expect(xml).to be_valid_nav_xml
-    expect(operation.parse(Nokogiri::XML(xml), request_id: "RID1", raw_xml: xml)).to eq("4Q8O2ZCTX1J8WGZ2")
+    expect(operation.parse(Nokogiri::XML(xml), request_id: "RID1", raw_xml: xml)).to eq(
+      NavOnlineInvoice::Submission.new(transaction_id: "4Q8O2ZCTX1J8WGZ2", request_id: "RID1", item_count: 2,
+                                       compressed: false, electronic_invoice_hashes: [nil, "AB"])
+    )
   end
 
   it "is a rate limited submission that is never retried" do
