@@ -1,11 +1,19 @@
 # frozen_string_literal: true
 
 module NavOnlineInvoice
-  # Decodes the base64 (and optionally gzip) invoice data that NAV sends back.
+  # Encodes and decodes the base64 (and optionally gzip) data inside NAV requests and responses.
   #
   # @api private
   module Payload
     module_function
+
+    # @param xml [String]
+    # @param compressed [Boolean] gzip the data first, at the fastest level as NAV asks (spec 1.6.5)
+    # @return [String] strict base64 without line breaks, as it goes into the request and the index hash
+    def encode(xml, compressed:)
+      bytes = compressed ? Zlib.gzip(xml, level: Zlib::BEST_SPEED) : xml
+      [bytes].pack("m0").freeze
+    end
 
     # @param base64 [String] NAV's xs:base64Binary value; line breaks are allowed
     # @param compressed [Boolean] NAV's compressedContentIndicator
