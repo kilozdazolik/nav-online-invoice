@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-18
+
 ### Added
 
 - Invoice queries: `client.invoices.digest` and `each_digest` (queryInvoiceDigest, with every NAV filter),
@@ -61,6 +63,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 - Project skeleton: gemspec, RSpec, RuboCop, GitHub Actions CI. No public API yet.
 
-[Unreleased]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/kilozdazolik/nav-online-invoice/releases/tag/v0.0.1
