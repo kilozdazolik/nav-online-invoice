@@ -6,6 +6,45 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `transactions.reconcile` searches by NAV's clock: `UnknownOutcomeError#sent_at` is NAV's time of sending, worked
+  out from the exchange token, and the window runs from five minutes before to ten minutes after it (spec 1.9.2).
+  A wrong local clock or a long throttle wait could hide the transaction and lead to a duplicate submission.
+- `reconcile` no longer counts an annulment, or a submission NAV aborted, as an arrived invoice; it refuses to run
+  on a `with_predecessor` client, whose list shows the predecessor's submissions.
+- An invoice with `completenessIndicator` written as `1` gets its `electronicInvoiceHash`.
+- A submission answered with a 4xx that is not a NAV answer raises the `TransportError` (rejected) instead of
+  `UnknownOutcomeError`.
+- `TransactionStatus#accepted?` is false while there are no results.
+- `transactions.each_transaction` checks its parameters before the first request.
+- `NOT_ALLOWED_EXCEPTION` raises `RequestError`, not `PermissionError`.
+- The generated Rails initializer leaves the gem unconfigured instead of stopping the boot when the credentials
+  have no `nav` entry.
+
+### Changed
+
+- **Breaking:** `ExchangeTokenError` inherits from `ApiError`, not `RequestError`, since submitting again is safe.
+- **Breaking:** electronic invoice hashes are `NavOnlineInvoice::ElectronicInvoiceHash` values in
+  `Submission#electronic_invoice_hashes` and `InvoiceDataResult#electronic_invoice_hash`;
+  `InvoiceDataResult#electronic_invoice_hash_type` is gone. `submit` takes a Hash or an `ElectronicInvoiceHash`.
+- **Breaking:** `reconcile` returns `{ invoice_number => [transaction_id, ...] }` and takes `annulment: true` for
+  annulments.
+- `TechnicalValidationMessage` is a top-level class; `ApiError::TechnicalValidationMessage` still refers to it.
+- `Submission#compressed?`, `Transaction#technical_annulment?` and `InvoiceDigest#complete?`.
+- Queries retry a bare 503 from a network device; NAV's own `MAINTENANCE_MODE` is still not retried.
+- `nokogiri` 1.19.5 or later.
+
+### Security
+
+- Schema validation messages leave the rejected values out (`SchemaValidationError#message`); the full messages
+  stay in `#errors`. `ArgumentError` messages no longer quote free text or tax numbers.
+- `Taxpayer` and `Address` leave the name and the address out of `inspect`; `pp` of every result and of every
+  operation shows the same redacted text; `to_h` of the exchange token and of a submitted item hides their data.
+- The Railtie hides the login, the password and the keys in `config.nav_online_invoice` once applied.
+- Unpacking gzip data stops at 20 MB; requests go only over https with a verified certificate and TLS 1.2 or later;
+  the log redactor also covers CDATA, comments and prefixes with dots or hyphens.
+
 ## [0.2.0] - 2026-11-18
 
 ### Added
@@ -32,6 +71,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Rails integration: a Railtie that uses `Rails.logger` by default and turns `config.nav_online_invoice` into the
   global configuration, and `rails generate nav_online_invoice:install`.
 - `NavOnlineInvoice.default_logger` for configurations that set no logger.
+- `Client#predecessor_tax_number`, `UnknownOutcomeError#reconcile_window`, `Crypto.index_hash`,
+  `Crypto.electronic_invoice_hash` and `Crypto.decrypt_token`; the log line has a `bytes=` field.
 
 ### Changed
 
@@ -40,6 +81,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `ApiError::TechnicalValidationMessage#result_code` is a Symbol (`:error`, `:critical`) instead of a String.
 - New runtime dependency: `bigdecimal` (any version shipped with Ruby 3.3 or later).
 - `INVALID_EXCHANGE_TOKEN` raises `ExchangeTokenError` (a `RequestError`).
+
+### Security
+
+- 0.1.0 logged NAV's answers at `debug` level without hiding anything; 0.2.0 logs no XML unless `log_payloads` is
+  set, and hides credentials and invoice data even then.
 
 ## [0.1.0] - 2026-11-17
 
