@@ -3,7 +3,7 @@ PATH
   specs:
     nav_online_invoice (0.2.0)
       bigdecimal (>= 3.1)
-      nokogiri (>= 1.16, < 2)
+      nokogiri (>= 1.19.5, < 2)
 
 GEM
   remote: https://rubygems.org/

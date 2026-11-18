@@ -5,7 +5,13 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # A new release must be a week old, so a compromised one is usually yanked before it reaches us.
+    cooldown:
+      default-days: 7
   - package-ecosystem: bundler
     directory: /
     schedule:
       interval: monthly
+    # A new release must be a week old, so a compromised one is usually yanked before it reaches us.
+    cooldown:
+      default-days: 7

@@ -9,7 +9,6 @@ AllCops:
   Exclude:
     - "vendor/**/*"
     - "pkg/**/*"
-    - "docs/handover/**/*"
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes

@@ -30,5 +30,6 @@ Gem::Specification.new do |spec|
 
   # Any version Ruby ships with is enough; a newer one would have to be compiled on Windows.
   spec.add_dependency "bigdecimal", ">= 3.1"
-  spec.add_dependency "nokogiri", ">= 1.16", "< 2"
+  # 1.19.5 fixes the latest libxml2 advisories (GHSA-3w22-6jfg-527w and others).
+  spec.add_dependency "nokogiri", ">= 1.19.5", "< 2"
 end
