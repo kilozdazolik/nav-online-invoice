@@ -27,6 +27,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - The `exchange_key` setting is checked (16 characters).
 - `client.with_predecessor` sends `predecessorTaxNumber`, to query and annul the data of a predecessor company.
 - `NavOnlineInvoice::Metrics` and `client.metrics` read NAV's service metrics (queryServiceMetrics).
+- Rails integration: a Railtie that uses `Rails.logger` by default and turns `config.nav_online_invoice` into the
+  global configuration, and `rails generate nav_online_invoice:install`.
+- `NavOnlineInvoice.default_logger` for configurations that set no logger.
 
 ### Changed
 

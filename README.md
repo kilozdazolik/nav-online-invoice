@@ -218,19 +218,55 @@ Dates are `Date`, timestamps `Time` in UTC, amounts `BigDecimal`, NAV's codes lo
 For an application with a single technical user:
 
 ```ruby
-# config/initializers/nav_online_invoice.rb
 NavOnlineInvoice.configure do |config|
-  config.environment = Rails.env.production? ? :production : :test
-  config.login = Rails.application.credentials.dig(:nav, :login)
-  config.password = Rails.application.credentials.dig(:nav, :password)
-  config.signature_key = Rails.application.credentials.dig(:nav, :signature_key)
-  config.tax_number = Rails.application.credentials.dig(:nav, :tax_number)
-  config.software = { id: "...", name: "...", operation: :online_service, main_version: "1.0",
-                      dev_name: "...", dev_contact: "..." }
-  config.logger = Rails.logger
+  config.environment = :production
+  config.login = "..."
+  # ... the same settings as Configuration.new
 end
 
 NavOnlineInvoice.client.taxpayers.query("12345678")
+```
+
+`NavOnlineInvoice.default_logger = logger` sets the logger of every configuration that sets none; `logger: nil`
+still turns logging off.
+
+### Rails
+
+The gem loads a Railtie when Rails is present. It reads no credentials or environment variables; the application
+passes the values in.
+
+```sh
+bin/rails generate nav_online_invoice:install   # creates config/initializers/nav_online_invoice.rb
+```
+
+The generated initializer reads the technical user from the credentials (`bin/rails credentials:edit`, under
+`nav:`) and calls `NavOnlineInvoice.configure`. Instead of an initializer, the settings can also go into the
+application's configuration:
+
+```ruby
+# config/application.rb or config/environments/production.rb
+config.nav_online_invoice.environment = :production
+config.nav_online_invoice.login = Rails.application.credentials.dig(:nav, :login)
+# ... any setting of Configuration.new
+```
+
+- `Rails.logger` is the default logger, unless a configuration sets its own.
+- An unknown or invalid setting stops the application at boot with a `ConfigurationError`.
+- Rails' default `filter_parameters` (`:passw`, `:_key`, `:token`, `:secret`) already hide the password and the
+  keys in the Rails log.
+- For several companies, skip the global configuration and keep one `Client` per company.
+
+The gem ships no background jobs; follow submissions from your own:
+
+```ruby
+class NavSubmissionJob < ApplicationJob
+  def perform(transaction_id)
+    status = NavOnlineInvoice.client.transactions.wait(transaction_id, timeout: 60)
+    return retry_job(wait: 1.minute) unless status&.finished?
+
+    # store status.accepted? and status.results
+  end
+end
 ```
 
 ### Options
