@@ -44,4 +44,8 @@ RSpec.describe NavOnlineInvoice::Throttle do
 
     expect(described_class.default).to be(first)
   end
+
+  it "rejects an interval that is not a positive number" do
+    expect { described_class.new(interval: 0) }.to raise_error(ArgumentError, /interval/)
+  end
 end

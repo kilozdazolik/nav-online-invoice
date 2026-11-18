@@ -10,8 +10,10 @@ module NavOnlineInvoice
     COMMIT_DELAY = 300
 
     # @api private
-    def initialize(client)
+    # @param sleeper [#call] waits between the status queries of {#wait}; for tests
+    def initialize(client, sleeper: Kernel.method(:sleep))
       @client = client
+      @sleeper = sleeper
     end
 
     # Asks how NAV processed a submission.
@@ -51,7 +53,7 @@ module NavOnlineInvoice
         remaining = deadline - Monotonic.now
         return current if current&.finished? || remaining <= 0
 
-        sleep([interval * rand(0.8..1.2), remaining].min)
+        @sleeper.call([interval * rand(0.8..1.2), remaining].min)
         interval = [interval * 1.5, MAX_INTERVAL].min
       end
     end
@@ -107,6 +109,7 @@ module NavOnlineInvoice
     # @yieldparam transaction [Transaction]
     # @return [Enumerator<Transaction>] if no block is given
     def each_transaction(ins_date:, status: nil, max_pages: nil, &)
+      Operations::QueryTransactionList.new(ins_date:, status:) # fail on bad parameters before the first request
       items = Paging.items(max_pages) { |page| list(ins_date:, status:, page:) }
       block_given? ? items.each(&) : items
     end

@@ -77,8 +77,10 @@ RSpec.describe NavOnlineInvoice::Metrics do
     expect(client.metrics.definitions.size).to eq(2)
   end
 
-  it "rejects an unknown environment" do
+  it "rejects an unknown environment and bad retry settings" do
     expect { described_class.new(environment: :staging) }.to raise_error(ArgumentError, /environment/)
+    expect { described_class.new(max_retries: -1) }.to raise_error(ArgumentError, /max_retries/)
+    expect { described_class.new(retry_base_delay: "1") }.to raise_error(ArgumentError, /retry_base_delay/)
   end
 
   describe "fixtures" do

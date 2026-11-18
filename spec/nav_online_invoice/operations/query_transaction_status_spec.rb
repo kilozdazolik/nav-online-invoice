@@ -49,6 +49,15 @@ RSpec.describe NavOnlineInvoice::Operations::QueryTransactionStatus do
                                       annulment_decision_date: Time.utc(2026, 11, 17, 9, 30))
   end
 
+  it "is not accepted while it has no results" do
+    status = NavOnlineInvoice::TransactionStatus.new(
+      request_id: "RID1", results: [], original_request_version: nil, annulment_verification_status: nil,
+      annulment_decision_date: nil, annulment_decision_user: nil, raw_xml: ""
+    )
+
+    expect(status).to have_attributes(accepted?: false, finished?: false)
+  end
+
   it "returns nil for an unknown transaction" do
     expect(parse("not_found.xml")).to be_nil
   end

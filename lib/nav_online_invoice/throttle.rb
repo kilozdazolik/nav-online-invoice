@@ -14,8 +14,10 @@ module NavOnlineInvoice
     end
 
     # @param interval [Numeric] seconds between two requests
-    def initialize(interval: 1.0, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
-                   sleeper: ->(seconds) { sleep(seconds) })
+    # @raise [ArgumentError] if the interval is not a positive number
+    def initialize(interval: 1.0, clock: Monotonic.method(:now), sleeper: Kernel.method(:sleep))
+      raise ArgumentError, "interval must be a positive number" unless interval.is_a?(Numeric) && interval.positive?
+
       @interval = interval
       @clock = clock
       @sleeper = sleeper

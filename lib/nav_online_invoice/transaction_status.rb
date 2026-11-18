@@ -32,7 +32,7 @@ module NavOnlineInvoice
     # Whether NAV processed every item without errors. For an annulment this does not mean it took effect: see
     # {#annulment_pending?} and {#annulled?}.
     def accepted?
-      results.all? { |result| result.done? && !result.errors? }
+      finished? && results.all? { |result| result.done? && !result.errors? }
     end
 
     # Whether the annulments wait for approval on NAV's web interface.

@@ -34,17 +34,25 @@ RSpec.describe NavOnlineInvoice::Transactions do
     expect(a_request(:post, endpoint)).to have_been_made.once
   end
 
+  it "rejects bad parameters of each_transaction before the first request" do
+    expect { transactions.each_transaction(ins_date: range, status: :unknown) }.to raise_error(ArgumentError)
+    expect(a_request(:post, endpoint)).not_to have_been_made
+  end
+
   describe "#wait" do
     let(:status_endpoint) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/queryTransactionStatus" }
     let(:clock) { [0.0] }
     let(:pauses) { [] }
-
-    before do
-      allow(NavOnlineInvoice::Monotonic).to receive(:now) { clock.first }
-      allow(transactions).to receive(:sleep) do |seconds|
+    let(:transactions) do
+      sleeper = lambda do |seconds|
         pauses << seconds
         clock[0] += seconds
       end
+      described_class.new(NavOnlineInvoice::Client.new(build_config(retry_base_delay: 0)), sleeper:)
+    end
+
+    before do
+      allow(NavOnlineInvoice::Monotonic).to receive(:now) { clock.first }
     end
 
     def answers(*names)

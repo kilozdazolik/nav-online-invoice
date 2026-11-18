@@ -11,7 +11,7 @@ module NavOnlineInvoice
       desc "Creates config/initializers/nav_online_invoice.rb with the settings NAV needs."
 
       def create_initializer
-        copy_file "nav_online_invoice.rb", "config/initializers/nav_online_invoice.rb"
+        template "nav_online_invoice.rb.tt", "config/initializers/nav_online_invoice.rb"
       end
     end
   end

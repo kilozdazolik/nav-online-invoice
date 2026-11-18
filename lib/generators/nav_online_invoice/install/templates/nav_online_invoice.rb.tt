@@ -10,7 +10,9 @@
 #     tax_number: "12345678"
 #
 # The test and the production environment need separate technical users.
-nav = Rails.application.credentials.nav || {}
+# Without them (e.g. in CI or during assets:precompile) the gem stays unconfigured instead of stopping the boot.
+nav = Rails.application.credentials.nav
+return if nav.blank?
 
 NavOnlineInvoice.configure do |config|
   config.environment = Rails.env.production? ? :production : :test

@@ -26,6 +26,13 @@ module NavOnlineInvoice
     def initialize(environment: :test, open_timeout: 5, read_timeout: 10, max_retries: 2, retry_base_delay: 1.0,
                    logger: nil)
       raise ArgumentError, "environment must be :test or :production" unless ENDPOINTS.key?(environment)
+      unless max_retries.is_a?(Integer) && max_retries >= 0
+        raise ArgumentError,
+              "max_retries must be an Integer of 0 or more"
+      end
+      unless retry_base_delay.is_a?(Numeric) && !retry_base_delay.negative?
+        raise ArgumentError, "retry_base_delay must be a number of 0 or more"
+      end
 
       @base = ENDPOINTS.fetch(environment)
       @transport = Transport.new(open_timeout:, read_timeout:, write_timeout: read_timeout)

@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required" => "true"
   }
 
-  spec.files = Dir["lib/**/*.rb", "schemas/**/*", "LICENSE.txt", "README.md", "CHANGELOG.md"]
+  spec.files = Dir["lib/**/*.rb", "lib/**/*.tt", "schemas/**/*", "LICENSE.txt", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
   # Any version Ruby ships with is enough; a newer one would have to be compiled on Windows.
