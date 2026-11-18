@@ -5,8 +5,8 @@
 
 Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** (*Online Számla*).
 
-> **Status:** every operation of the API is supported: tax number lookups, invoice and transaction queries, invoice
-> submission and technical annulment. The API may change before 1.0.
+> **Status:** the whole API is supported: tax number lookups, invoice and transaction queries, invoice submission,
+> technical annulment, predecessor companies and the service metrics. The API may change before 1.0.
 
 - **Plain Ruby, Rails optional.** Works in any Ruby process.
 - **Per-client configuration.** One process can call NAV for several companies, each with its own technical user.
@@ -176,7 +176,36 @@ status.annulled?                              # approved: the invoice number can
 
 `code` is one of `:erratic_data`, `:erratic_invoice_number`, `:erratic_invoice_issue_date` and
 `:erratic_electronic_hash_value`. An annulment takes effect only after a user approves it on NAV's web interface.
-Annulling an invoice of a predecessor company (`predecessorTaxNumber`) is not supported yet.
+
+### Predecessor companies
+
+After a merger or split, the successor can work with the data of its predecessor:
+
+```ruby
+predecessor = client.with_predecessor("11111111-2-41")  # a new client; `client` is unchanged
+predecessor.invoices.digest(direction: :outbound, issue_date: from..to)
+predecessor.transactions.status(transaction_id)
+predecessor.invoices.annul([{ reference: "OLD-0001", code: :erratic_data, reason: "Wrong customer" }])
+```
+
+Its queries search the predecessor's invoices and submissions, and `annul` annuls the predecessor's invoices. Tax
+number lookups and submissions are not affected; an invoice submitted on behalf of a predecessor says so in its own
+data. NAV limits what a successor sees: after a split only the data up to the date of the split, without
+`return_original_request` (so `reconcile` does not work), and after leaving a VAT group no transaction queries.
+
+### Service metrics
+
+NAV publishes the average response time of each operation and the average invoice processing time of the last
+hour, refreshed every minute. No credentials are needed:
+
+```ruby
+metrics = NavOnlineInvoice::Metrics.new(environment: :production)    # or client.metrics
+metrics.get("responseTimeAverageMsManageInvoice")&.values&.last&.value # => 135.47 (ms, BigDecimal)
+metrics.all.metrics.map(&:name)                                        # every metric with its values
+metrics.definitions                                                    # names and descriptions only
+```
+
+`get` returns `nil` for an unknown name. NAV keeps the metrics in memory only, so they can be empty after a restart.
 
 ### Types
 
@@ -307,7 +336,7 @@ To call NAV for real, copy `.env.example` to `.env`, fill it in (never commit it
 bin/dev sh -c 'NAV_INTEGRATION=1 bundle exec rspec spec/integration'
 ```
 
-The submission spec sends an invented invoice, so it runs only against NAV's test environment and only with
+The service metrics spec needs no `.env`. The submission spec sends an invented invoice, so it runs only against NAV's test environment and only with
 `NAV_ALLOW_SUBMISSION=1` and `NAV_EXCHANGE_KEY` set.
 
 NAV's XML schemas are copied into `schemas/`; see [schemas/README.md](schemas/README.md) for their source and how

@@ -25,6 +25,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `UnknownOutcomeError`, `ExchangeTokenError`, `SubmissionTooLargeError` and `TransportError#request_sent?`.
 - `ProcessingResult#final?` and `#pending?`; `TransactionStatus#finished?`, `#annulment_pending?` and `#annulled?`.
 - The `exchange_key` setting is checked (16 characters).
+- `client.with_predecessor` sends `predecessorTaxNumber`, to query and annul the data of a predecessor company.
+- `NavOnlineInvoice::Metrics` and `client.metrics` read NAV's service metrics (queryServiceMetrics).
 
 ### Changed
 
