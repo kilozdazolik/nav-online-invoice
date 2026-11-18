@@ -6,6 +6,9 @@ module NavOnlineInvoice
     # The longest pause between two status queries in {#wait}, in seconds.
     MAX_INTERVAL = 15
 
+    # How long NAV may take to store a submission it received (spec 1.9.2), in seconds.
+    COMMIT_DELAY = 300
+
     # @api private
     def initialize(client)
       @client = client
@@ -53,6 +56,31 @@ module NavOnlineInvoice
       end
     end
 
+    # Finds out which of the given invoices arrived in a submission that got no answer (spec 1.9.2).
+    #
+    # Lists the transactions NAV received around +sent_at+ and reads their original requests. Call it no earlier
+    # than five minutes after +sent_at+, so NAV has stored everything it received. An invoice missing from the
+    # result did not arrive and can be submitted again.
+    #
+    # @example
+    #   rescue NavOnlineInvoice::UnknownOutcomeError => e
+    #     # five minutes later:
+    #     found = client.transactions.reconcile(sent_at: e.sent_at, invoice_numbers: numbers)
+    # @param sent_at [Time] {UnknownOutcomeError#sent_at}
+    # @param invoice_numbers [Array<String>] invoice numbers, or for annulments the annulled numbers
+    # @return [Hash{String => String}] invoice number => transaction ID, for the invoices that arrived
+    # @raise [ArgumentError] if called within five minutes of +sent_at+
+    def reconcile(sent_at:, invoice_numbers:)
+      check_reconcile(sent_at)
+      wanted = invoice_numbers.map(&:to_s)
+      found = {}
+      each_transaction(ins_date: (sent_at - 60)..(sent_at + 600)) do |transaction|
+        id = transaction.transaction_id
+        (submitted_numbers(id) & wanted).each { |number| found[number] = id }
+      end
+      found
+    end
+
     # Lists the submissions NAV received in a time range, one page at a time.
     #
     # Useful to find a transaction ID that was lost, e.g. after a timeout.
@@ -80,6 +108,23 @@ module NavOnlineInvoice
     end
 
     private
+
+    def check_reconcile(sent_at)
+      return if @client.config.clock.call - sent_at >= COMMIT_DELAY
+
+      raise ArgumentError, "reconcile no earlier than five minutes after sent_at, so NAV has stored the submission"
+    end
+
+    # The invoice or annulled numbers in a transaction's original request.
+    def submitted_numbers(transaction_id)
+      results = status(transaction_id, return_original_request: true)&.results || []
+      results.filter_map do |result|
+        next unless result.original_request
+
+        Nokogiri::XML(result.original_request)
+                .at_xpath("/*/*[local-name()='invoiceNumber' or local-name()='annulmentReference']")&.text
+      end
+    end
 
     def check_wait(timeout, interval)
       raise ArgumentError, "timeout must be a number of 0 or more" unless timeout.is_a?(Numeric) && !timeout.negative?

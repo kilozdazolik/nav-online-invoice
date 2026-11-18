@@ -95,4 +95,43 @@ RSpec.describe NavOnlineInvoice::Transactions do
       expect { transactions.wait("TRANSACTION1", interval: 0) }.to raise_error(ArgumentError, /interval/)
     end
   end
+
+  describe "#reconcile" do
+    let(:sent_at) { Time.utc(2026, 11, 16, 12) }
+    let(:transactions) do
+      NavOnlineInvoice::Client.new(build_config(clock: -> { sent_at + 400 })).transactions
+    end
+    let(:status_endpoint) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/queryTransactionStatus" }
+
+    before do
+      stub_request(:post, endpoint).to_return(body: page_answer(1, 1))
+      stub_request(:post, status_endpoint).to_return do |request|
+        name = request.body.include?("3XAMPLETRANSACT10N01") ? "with_original_request" : "not_found"
+        { body: fixture("responses/query_transaction_status/#{name}.xml") }
+      end
+    end
+
+    it "finds the transaction of each invoice that arrived" do
+      found = transactions.reconcile(sent_at:, invoice_numbers: %w[INV-2026-0001 INV-2026-0099])
+
+      expect(found).to eq("INV-2026-0001" => "3XAMPLETRANSACT10N01")
+    end
+
+    it "lists the transactions around the time of sending and asks for their original requests" do
+      transactions.reconcile(sent_at:, invoice_numbers: ["INV-2026-0001"])
+
+      expect(a_request(:post, endpoint).with do |request|
+        request.body.include?("<dateTimeFrom>2026-11-16T11:59:00.000Z</dateTimeFrom>") &&
+          request.body.include?("<dateTimeTo>2026-11-16T12:10:00.000Z</dateTimeTo>")
+      end).to have_been_made
+      expect(a_request(:post, status_endpoint).with(body: /<returnOriginalRequest>true</)).to have_been_made.twice
+    end
+
+    it "refuses to run within five minutes of sending" do
+      early = NavOnlineInvoice::Client.new(build_config(clock: -> { sent_at + 60 })).transactions
+
+      expect { early.reconcile(sent_at:, invoice_numbers: ["INV-2026-0001"]) }
+        .to raise_error(ArgumentError, /five minutes/)
+    end
+  end
 end
