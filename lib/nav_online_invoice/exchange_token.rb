@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+
+module NavOnlineInvoice
+  ExchangeToken = Data.define(:value, :valid_from, :valid_to, :received_at)
+
+  # A decrypted, single-use exchange token for one manageInvoice or manageAnnulment request.
+  #
+  # Its age is measured on the monotonic clock from when it arrived, so a wrong or jumping local clock does not
+  # matter; only the length of NAV's validity window is taken from the answer.
+  #
+  # @api private
+  class ExchangeToken
+    # Seconds kept in reserve for the request to reach NAV.
+    MARGIN = 30
+
+    # Seconds of the current monotonic clock.
+    def self.now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    # Whether the token is still valid for a request sent now.
+    def fresh?(now = self.class.now)
+      return false unless valid_from && valid_to
+
+      (valid_to - valid_from) - (now - received_at) > MARGIN
+    end
+
+    # Leaves out the token.
+    def inspect
+      "#<data #{self.class.name} value=[FILTERED], valid_from=#{valid_from.inspect}, valid_to=#{valid_to.inspect}>"
+    end
+    alias to_s inspect
+
+    # Used by +pp+, IRB and the Rails console.
+    def pretty_print(printer)
+      printer.text(inspect)
+    end
+  end
+end

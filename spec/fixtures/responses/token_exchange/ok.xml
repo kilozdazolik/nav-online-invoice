@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented data in the shape of a NAV response; the token is encrypted with the spec suite's exchange key. -->
+<TokenExchangeResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/api" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common" xmlns:ns3="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <ns2:header>
+    <ns2:requestId>NOI0000000001TEST0001</ns2:requestId>
+    <ns2:timestamp>2026-11-17T10:00:00.000Z</ns2:timestamp>
+    <ns2:requestVersion>3.0</ns2:requestVersion>
+    <ns2:headerVersion>1.0</ns2:headerVersion>
+  </ns2:header>
+  <ns2:result>
+    <ns2:funcCode>OK</ns2:funcCode>
+  </ns2:result>
+  <software>
+    <softwareId>HU12345678TEST-001</softwareId>
+    <softwareName>Spec Suite</softwareName>
+    <softwareOperation>LOCAL_SOFTWARE</softwareOperation>
+    <softwareMainVersion>1.0</softwareMainVersion>
+    <softwareDevName>Example Developer</softwareDevName>
+    <softwareDevContact>dev@example.com</softwareDevContact>
+  </software>
+  <encodedExchangeToken>RPhlHKAJqPKVpOhEjIfPAHYVFPFtVMDB+nVG5+0lomY=</encodedExchangeToken>
+  <tokenValidityFrom>2026-11-17T10:00:00.000Z</tokenValidityFrom>
+  <tokenValidityTo>2026-11-17T10:05:00.000Z</tokenValidityTo>
+</TokenExchangeResponse>

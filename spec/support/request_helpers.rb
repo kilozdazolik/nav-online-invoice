@@ -6,6 +6,13 @@ module RequestHelpers
     NavOnlineInvoice::RequestBuilder.new(config).build(operation, request_id: "RID1", time: Time.utc(2026, 1, 1))
   end
 
+  # The whole request in canonical form, without comments and whitespace.
+  def canonical(xml)
+    document = Nokogiri::XML(xml, &:noblanks)
+    document.xpath("//comment()").remove
+    document.canonicalize
+  end
+
   # The canonical elements after <software>: what an operation adds to the request.
   def request_body(xml)
     document = Nokogiri::XML(xml, &:noblanks)
