@@ -17,6 +17,10 @@ RSpec.describe NavOnlineInvoice::ExchangeToken do
     expect(token.fresh?(1001.0)).to be(true)
   end
 
+  it "tells NAV's time from the validity start and the time since it arrived" do
+    expect(token.nav_time(1000.0 + 90)).to eq(Time.utc(2026, 11, 17, 10, 1, 30))
+  end
+
   it "is never fresh without a validity window" do
     expect(token.with(valid_to: nil).fresh?(1000.0)).to be(false)
   end

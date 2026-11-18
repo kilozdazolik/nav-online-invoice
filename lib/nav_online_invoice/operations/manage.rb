@@ -42,16 +42,20 @@ module NavOnlineInvoice
         @index_hashes = @items.map { |item| Crypto.index_hash(item.operation, item.data) }.freeze
       end
 
-      attr_reader :index_hashes
+      attr_reader :index_hashes, :sent_at
 
       def submission? = true
       def max_body_bytes = MAX_BODY_BYTES
 
+      # Also notes the time of sending by NAV's clock, which a lost answer is reconciled against.
+      #
       # @raise [ExchangeTokenError] if the token expired while the request waited
       def check_before_send!
-        return if @token.fresh?
+        unless @token.fresh?
+          raise ExchangeTokenError.new(code: nil, nav_message: "the exchange token expired before the request was sent")
+        end
 
-        raise ExchangeTokenError.new(code: nil, nav_message: "the exchange token expired before the request was sent")
+        @sent_at = @token.nav_time
       end
 
       # @return [Submission] NAV processes the items afterwards

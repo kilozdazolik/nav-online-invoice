@@ -40,6 +40,11 @@ module NavOnlineInvoice
       # Runs right before the request is sent, after the throttle; raises to stop it.
       def check_before_send!; end
 
+      # When the request was sent by NAV's clock, if the operation knows it; see {UnknownOutcomeError#sent_at}.
+      #
+      # @return [Time, nil]
+      def sent_at = nil
+
       # The hashes of the submitted items that are part of the request signature, in index order (spec 1.5.1).
       #
       # @return [Array<String>] empty for every operation but manageInvoice and manageAnnulment

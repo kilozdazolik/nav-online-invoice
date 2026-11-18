@@ -104,7 +104,7 @@ module NavOnlineInvoice
     def unknown_outcome(operation, error, request_id, time)
       return error unless operation.submission? && outcome_unknown?(error)
 
-      UnknownOutcomeError.new(operation: operation.name, request_id:, sent_at: time,
+      UnknownOutcomeError.new(operation: operation.name, request_id:, sent_at: operation.sent_at || time,
                               item_count: operation.index_hashes.size)
     end
 

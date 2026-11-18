@@ -58,27 +58,31 @@ module NavOnlineInvoice
 
     # Finds out which of the given invoices arrived in a submission that got no answer (spec 1.9.2).
     #
-    # Lists the transactions NAV received around +sent_at+ and reads their original requests. Call it no earlier
-    # than five minutes after +sent_at+, so NAV has stored everything it received. An invoice missing from the
-    # result did not arrive and can be submitted again.
+    # Lists the transactions NAV received around `sent_at` and reads their original requests. Call it no earlier
+    # than five minutes after `sent_at`, so NAV has stored everything it received. An invoice missing from the
+    # result did not arrive, or NAV aborted it, and can be submitted again.
     #
     # @example
     #   rescue NavOnlineInvoice::UnknownOutcomeError => e
     #     # five minutes later:
     #     found = client.transactions.reconcile(sent_at: e.sent_at, invoice_numbers: numbers)
     # @param sent_at [Time] {UnknownOutcomeError#sent_at}
-    # @param invoice_numbers [Array<String>] invoice numbers, or for annulments the annulled numbers
-    # @return [Hash{String => String}] invoice number => transaction ID, for the invoices that arrived
-    # @raise [ArgumentError] if called within five minutes of +sent_at+
-    def reconcile(sent_at:, invoice_numbers:)
+    # @param invoice_numbers [Array<String>] the submitted invoice numbers, or the annulled ones
+    # @param annulment [Boolean] look for technical annulments instead of invoices
+    # @return [Hash{String => Array<String>}] invoice number => IDs of the transactions that hold it and that NAV
+    #   did not abort; more than one ID means it arrived more than once
+    # @raise [ArgumentError] if called within five minutes of `sent_at`, or on a {Client#with_predecessor} client
+    def reconcile(sent_at:, invoice_numbers:, annulment: false)
       check_reconcile(sent_at)
       wanted = invoice_numbers.map(&:to_s)
-      found = {}
-      each_transaction(ins_date: (sent_at - 60)..(sent_at + 600)) do |transaction|
+      found = Hash.new { |hash, number| hash[number] = [] }
+      each_transaction(ins_date: UnknownOutcomeError.reconcile_window(sent_at)) do |transaction|
+        next unless (transaction.technical_annulment == true) == annulment
+
         id = transaction.transaction_id
-        (submitted_numbers(id) & wanted).each { |number| found[number] = id }
+        (arrived_numbers(id) & wanted).each { |number| found[number] |= [id] }
       end
-      found
+      found.to_h
     end
 
     # Lists the submissions NAV received in a time range, one page at a time.
@@ -109,17 +113,21 @@ module NavOnlineInvoice
 
     private
 
+    # Submissions are stored with the successor, whose own client must look for them.
     def check_reconcile(sent_at)
+      if @client.predecessor_tax_number
+        raise ArgumentError, "reconcile with the client that submitted, not with_predecessor"
+      end
       return if @client.config.clock.call - sent_at >= COMMIT_DELAY
 
       raise ArgumentError, "reconcile no earlier than five minutes after sent_at, so NAV has stored the submission"
     end
 
-    # The invoice or annulled numbers in a transaction's original request.
-    def submitted_numbers(transaction_id)
+    # The invoice or annulled numbers of a transaction that NAV did not abort.
+    def arrived_numbers(transaction_id)
       results = status(transaction_id, return_original_request: true)&.results || []
       results.filter_map do |result|
-        next unless result.original_request
+        next if result.aborted? || result.original_request.nil?
 
         Nokogiri::XML(result.original_request)
                 .at_xpath("/*/*[local-name()='invoiceNumber' or local-name()='annulmentReference']")&.text

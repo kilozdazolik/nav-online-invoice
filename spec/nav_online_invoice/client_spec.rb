@@ -181,7 +181,7 @@ RSpec.describe NavOnlineInvoice::Client do
       expect { submit }.to raise_error(NavOnlineInvoice::UnknownOutcomeError) { |error|
         expect(error).to have_attributes(operation: "manageInvoice", request_id: "RID1", item_count: 2,
                                          sent_at: Time.utc(2026, 11, 18, 9), retryable?: false)
-        expect(error.reconcile_window).to eq(Time.utc(2026, 11, 18, 8, 59)..Time.utc(2026, 11, 18, 9, 10))
+        expect(error.reconcile_window).to eq(Time.utc(2026, 11, 18, 8, 55)..Time.utc(2026, 11, 18, 9, 10))
       }
       expect(a_request(:post, submit_endpoint)).to have_been_made.once
     end

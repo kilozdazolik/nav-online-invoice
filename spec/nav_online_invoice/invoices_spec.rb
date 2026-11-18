@@ -121,6 +121,18 @@ RSpec.describe NavOnlineInvoice::Invoices do
       expect(a_request(:post, "#{base}/manageInvoice")).to have_been_made.once
     end
 
+    it "dates the lost submission by NAV's clock, worked out from the token" do
+      stub_request(:post, "#{base}/manageInvoice").to_timeout
+      clock = 1000.0
+      allow(NavOnlineInvoice::Monotonic).to receive(:now) { clock }
+      allow(throttle).to receive(:wait) { |name| clock += 42 if name == "manageInvoice" }
+
+      expect { invoices.submit(items) }.to raise_error(NavOnlineInvoice::UnknownOutcomeError) { |error|
+        # the token is valid from 10:00:00 by NAV's clock, and the request waited 42 seconds for the throttle
+        expect(error.sent_at).to eq(Time.utc(2026, 11, 17, 10, 0, 42))
+      }
+    end
+
     it "retries a failed token request, which changes nothing" do
       stub_submission
       stub_request(:post, "#{base}/tokenExchange").to_timeout.then.to_return(token_answer)

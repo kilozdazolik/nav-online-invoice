@@ -102,29 +102,57 @@ RSpec.describe NavOnlineInvoice::Transactions do
       NavOnlineInvoice::Client.new(build_config(clock: -> { sent_at + 400 })).transactions
     end
     let(:status_endpoint) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/queryTransactionStatus" }
+    # The status answer per transaction; the original request of both holds invoice INV-2026-0001.
+    let(:statuses) { { "3XAMPLETRANSACT10N01" => "done", "3XAMPLETRANSACT10N02" => "done" } }
+    let(:list) { page_answer(1, 1) }
+
+    def status_answer(state)
+      fixture("responses/query_transaction_status/with_original_request.xml")
+        .sub("<invoiceStatus>DONE</invoiceStatus>", "<invoiceStatus>#{state.upcase}</invoiceStatus>")
+    end
 
     before do
-      stub_request(:post, endpoint).to_return(body: page_answer(1, 1))
+      stub_request(:post, endpoint).to_return(body: list)
       stub_request(:post, status_endpoint).to_return do |request|
-        name = request.body.include?("3XAMPLETRANSACT10N01") ? "with_original_request" : "not_found"
-        { body: fixture("responses/query_transaction_status/#{name}.xml") }
+        { body: status_answer(statuses.fetch(request.body[/<transactionId>(\w+)</, 1])) }
       end
     end
 
-    it "finds the transaction of each invoice that arrived" do
-      found = transactions.reconcile(sent_at:, invoice_numbers: %w[INV-2026-0001 INV-2026-0099])
-
-      expect(found).to eq("INV-2026-0001" => "3XAMPLETRANSACT10N01")
+    def reconcile(**options)
+      transactions.reconcile(sent_at:, invoice_numbers: %w[INV-2026-0001 INV-2026-0099], **options)
     end
 
-    it "lists the transactions around the time of sending and asks for their original requests" do
-      transactions.reconcile(sent_at:, invoice_numbers: ["INV-2026-0001"])
+    it "finds the transaction of each invoice that arrived, ignoring annulments" do
+      expect(reconcile).to eq("INV-2026-0001" => ["3XAMPLETRANSACT10N01"])
+      expect(a_request(:post, status_endpoint).with(body: /3XAMPLETRANSACT10N02/)).not_to have_been_made
+    end
+
+    it "looks only at annulments when asked to" do
+      expect(reconcile(annulment: true)).to eq("INV-2026-0001" => ["3XAMPLETRANSACT10N02"])
+    end
+
+    it "does not count an aborted submission as arrived" do
+      statuses["3XAMPLETRANSACT10N01"] = "aborted"
+
+      expect(reconcile).to eq({})
+    end
+
+    context "when the invoice arrived twice" do
+      let(:list) { page_answer(1, 1).gsub("<technicalAnnulment>true<", "<technicalAnnulment>false<") }
+
+      it "returns every transaction that holds it" do
+        expect(reconcile).to eq("INV-2026-0001" => %w[3XAMPLETRANSACT10N01 3XAMPLETRANSACT10N02])
+      end
+    end
+
+    it "searches from five minutes before sending to ten minutes after, with the original requests" do
+      reconcile
 
       expect(a_request(:post, endpoint).with do |request|
-        request.body.include?("<dateTimeFrom>2026-11-16T11:59:00.000Z</dateTimeFrom>") &&
+        request.body.include?("<dateTimeFrom>2026-11-16T11:55:00.000Z</dateTimeFrom>") &&
           request.body.include?("<dateTimeTo>2026-11-16T12:10:00.000Z</dateTimeTo>")
       end).to have_been_made
-      expect(a_request(:post, status_endpoint).with(body: /<returnOriginalRequest>true</)).to have_been_made.twice
+      expect(a_request(:post, status_endpoint).with(body: /<returnOriginalRequest>true</)).to have_been_made.once
     end
 
     it "refuses to run within five minutes of sending" do
@@ -132,6 +160,14 @@ RSpec.describe NavOnlineInvoice::Transactions do
 
       expect { early.reconcile(sent_at:, invoice_numbers: ["INV-2026-0001"]) }
         .to raise_error(ArgumentError, /five minutes/)
+    end
+
+    it "refuses to run for a predecessor, since submissions are stored with the successor" do
+      predecessor = NavOnlineInvoice::Client.new(build_config(clock: -> { sent_at + 400 }))
+                                            .with_predecessor("11111111").transactions
+
+      expect { predecessor.reconcile(sent_at:, invoice_numbers: ["INV-2026-0001"]) }
+        .to raise_error(ArgumentError, /with_predecessor/)
     end
   end
 end

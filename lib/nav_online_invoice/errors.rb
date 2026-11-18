@@ -65,13 +65,26 @@ module NavOnlineInvoice
   # transaction with {Transactions#reconcile} or {Transactions#list} over {#reconcile_window} (spec 1.9.2).
   # Deliberately not a {TransportError}, so a generic retry of transport errors cannot send invoices twice.
   class UnknownOutcomeError < Error
+    # Seconds around {#sent_at} to search: NAV suggests a little more than the five minutes it may take to store a
+    # submission (spec 1.9.2).
+    RECONCILE_WINDOW = (-300..600)
+
+    # The time range to search for a submission sent at +sent_at+.
+    #
+    # @param sent_at [Time]
+    # @return [Range<Time>]
+    def self.reconcile_window(sent_at)
+      (sent_at + RECONCILE_WINDOW.begin)..(sent_at + RECONCILE_WINDOW.end)
+    end
+
     # @return [String] e.g. "manageInvoice"
     attr_reader :operation
 
     # @return [String]
     attr_reader :request_id
 
-    # @return [Time] the timestamp in the request header
+    # @return [Time] when the request was sent, by NAV's clock as far as it is known (it is worked out from the
+    #   exchange token), so a wrong local clock does not move the search window
     attr_reader :sent_at
 
     # @return [Integer] the number of invoices or annulments in the request
@@ -90,11 +103,11 @@ module NavOnlineInvoice
             "after five minutes, look for the transaction (spec 1.9.2)")
     end
 
-    # The time range to search with {Transactions#list}: from a minute before sending to ten minutes after.
+    # The time range to search with {Transactions#list}: from five minutes before sending to ten minutes after.
     #
     # @return [Range<Time>]
     def reconcile_window
-      (sent_at - 60)..(sent_at + 600)
+      self.class.reconcile_window(sent_at)
     end
   end
 

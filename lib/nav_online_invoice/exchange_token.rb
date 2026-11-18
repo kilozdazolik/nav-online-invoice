@@ -20,6 +20,13 @@ module NavOnlineInvoice
       (valid_to - valid_from) - (now - received_at) > MARGIN
     end
 
+    # NAV's clock now, worked out from the token's validity start and the time since it arrived.
+    #
+    # @return [Time, nil]
+    def nav_time(now = Monotonic.now)
+      valid_from && (valid_from + (now - received_at))
+    end
+
     # Leaves out the token.
     def inspect
       "#<data #{self.class.name} value=[FILTERED], valid_from=#{valid_from.inspect}, valid_to=#{valid_to.inspect}>"

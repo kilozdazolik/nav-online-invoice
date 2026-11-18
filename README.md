@@ -152,7 +152,7 @@ status.results.reject(&:done?).map(&:index)   # positions (from 1) to fix and su
   rescue NavOnlineInvoice::UnknownOutcomeError => e
     # five minutes later, e.g. from a background job:
     found = client.transactions.reconcile(sent_at: e.sent_at, invoice_numbers: numbers)
-    # => { "INV-2026-0001" => "4Q8O2ZCTX1J8WGZ2" }; submit the rest again
+    # => { "INV-2026-0001" => ["4Q8O2ZCTX1J8WGZ2"] }; submit the rest again
   ```
 
 - **Partial failures.** Each invoice is processed on its own. Submit only the aborted ones again, in a new call.
