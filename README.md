@@ -5,8 +5,8 @@
 
 Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** (*Online Számla*).
 
-> **Status:** tax number lookups, invoice queries and transaction queries are supported. Invoice submission follows
-> in a later version. The API may change before 1.0.
+> **Status:** every operation of the API is supported: tax number lookups, invoice and transaction queries, invoice
+> submission and technical annulment. The API may change before 1.0.
 
 - **Plain Ruby, Rails optional.** Works in any Ruby process.
 - **Per-client configuration.** One process can call NAV for several companies, each with its own technical user.
@@ -15,6 +15,8 @@ Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** 
 - **Safe by default.** Every request gets a fresh request ID and signature (also on retry), outgoing XML is checked
   against NAV's official schemas, requests are rate limited, and credentials are hidden in logs, `inspect`, `pp`
   and `to_h`.
+- **Submissions are sent once.** Invoices are never resent automatically; when no answer arrives, a dedicated error
+  says so and `reconcile` finds out whether they arrived.
 - **Typed errors.** Errors are mapped from NAV's `errorCode` and tell you whether trying again makes sense.
 
 ## Requirements
@@ -46,6 +48,7 @@ config = NavOnlineInvoice::Configuration.new(
   login: "...",
   password: "...",                    # or password_hash: "..." (SHA-512, hex)
   signature_key: "...",
+  exchange_key: "...",                # only needed to submit invoices
   tax_number: "12345678",             # the technical user's company; 8 or 11 digits
   software: {
     id: "HU12345678ABCDE-01",         # exactly 18 characters of 0-9, A-Z and -
@@ -121,6 +124,60 @@ status.results.each do |result|
 end
 ```
 
+### Submitting invoices
+
+The gem does not build invoices: pass the finished
+[InvoiceData 3.0](https://github.com/nav-gov-hu/Online-Invoice/tree/master/src/schemas/nav/gov/hu/OSA) XML your
+invoicing software produced. The gem checks it against NAV's schema, encodes and signs it, requests a single-use
+exchange token, and sends up to 100 invoices in one request.
+
+```ruby
+submission = client.invoices.submit([
+  { operation: :create, xml: invoice_xml },
+  { operation: :storno, xml: storno_xml }
+])
+submission.transaction_id                     # NAV received the request; processing is asynchronous
+
+status = client.transactions.wait(submission.transaction_id, timeout: 120)
+status.finished?                              # NAV finished with every invoice
+status.accepted?                              # ... and all of them are DONE without errors
+status.results.reject(&:done?).map(&:index)   # positions (from 1) to fix and submit again
+```
+
+- **Sent once, never retried.** A NAV error answer (`ApiError`) means nothing was stored, so the invoices can be
+  sent again. `UnknownOutcomeError` means the request was sent but no answer arrived: the invoices may be at NAV.
+  Do not resend them blindly; after five minutes, ask NAV:
+
+  ```ruby
+  rescue NavOnlineInvoice::UnknownOutcomeError => e
+    # five minutes later, e.g. from a background job:
+    found = client.transactions.reconcile(sent_at: e.sent_at, invoice_numbers: numbers)
+    # => { "INV-2026-0001" => "4Q8O2ZCTX1J8WGZ2" }; submit the rest again
+  ```
+
+- **Partial failures.** Each invoice is processed on its own. Submit only the aborted ones again, in a new call.
+- **Size.** NAV accepts at most 10 MB per request and 15 MB per invoice. With `compress: :auto` (the default) the
+  invoices are gzipped only when the request would be too large; `compress: true` or `false` decides yourself.
+- **Electronic invoices.** When the XML itself is the electronic invoice (`completenessIndicator` true), the gem
+  computes its `electronicInvoiceHash`. Otherwise pass the hash of your own electronic invoice file:
+  `electronic_invoice_hash: { value: "...", crypto_type: "SHA-256" }` (or `"SHA3-512"`).
+- `wait` returns the last status at the timeout instead of raising; store it and ask again later with `status`.
+
+### Technical annulment
+
+```ruby
+annulment = client.invoices.annul([
+  { reference: "INV-2026-0001", code: :erratic_data, reason: "Sent with a wrong customer" }
+])
+status = client.transactions.wait(annulment.transaction_id)
+status.annulment_pending?                     # waits for approval on NAV's web interface
+status.annulled?                              # approved: the invoice number can be submitted again
+```
+
+`code` is one of `:erratic_data`, `:erratic_invoice_number`, `:erratic_invoice_issue_date` and
+`:erratic_electronic_hash_value`. An annulment takes effect only after a user approves it on NAV's web interface.
+Annulling an invoice of a predecessor company (`predecessorTaxNumber`) is not supported yet.
+
 ### Types
 
 Dates are `Date`, timestamps `Time` in UTC, amounts `BigDecimal`, NAV's codes lowercase symbols (`:outbound`,
@@ -176,14 +233,17 @@ can succeed.
 |---|---|---|
 | `ConfigurationError` | a setting is missing or malformed | no |
 | `SchemaValidationError` | the request does not match NAV's schema; it was not sent | no |
-| `TransportError` | timeout, connection error, or a response that is not XML | if `retryable?` |
+| `TransportError` | timeout, connection error, or a response that is not XML; `request_sent?` is false if the connection failed | if `retryable?`, except submissions |
+| `UnknownOutcomeError` | a submission was sent but got no answer; see `reconcile` | no |
+| `SubmissionTooLargeError` | a submission is over NAV's size limits; it was not sent | no |
 | `AuthenticationError` | `INVALID_SECURITY_USER`, `INVALID_REQUEST_SIGNATURE`, ... | no |
 | `PermissionError` | `FORBIDDEN`: the technical user lacks the permission | no |
 | `CustomerError` | `NOT_REGISTERED_CUSTOMER`, `INVALID_CUSTOMER`, `INVALID_USER_RELATION`, ... | no |
 | `RequestError` | `INVALID_REQUEST`, `INVALID_TIMESTAMP`, `BAD_QUERY_PARAM_*`, ... | no |
+| `ExchangeTokenError` | `INVALID_EXCHANGE_TOKEN`: wrong exchange key, or the token expired; nothing was stored | no (`retryable?` is true) |
 | `MaintenanceError` | NAV is under maintenance | no (`retryable?` is true: try again later) |
-| `TemporaryError` | `OPERATION_FAILED`, `REQUEST_ID_NOT_UNIQUE` | yes |
-| `DecodeError` | NAV sent invoice data that is not valid base64, gzip or UTF-8 | no |
+| `TemporaryError` | `OPERATION_FAILED`, `REQUEST_ID_NOT_UNIQUE` | yes, except submissions |
+| `DecodeError` | NAV sent invoice data that is not valid base64, gzip or UTF-8, or a token the exchange key does not decrypt | no |
 
 Invalid parameters raise Ruby's `ArgumentError` before anything is sent.
 
@@ -204,9 +264,10 @@ end
 
 - Each attempt gets a **new request ID, timestamp and signature**. NAV rejects a reused request ID, including the
   ID of a request it refused with `FORBIDDEN` or `INVALID_REQUEST_SIGNATURE`.
-- Only temporary failures are retried. In the worst case one call takes about `(max_retries + 1) × read_timeout`.
+- Only temporary failures of queries and token requests are retried. Submissions (`submit`, `annul`) are never
+  retried. In the worst case one call takes about `(max_retries + 1) × read_timeout`.
 - NAV allows **one request per second per IP address** on `queryTaxpayer`, `queryInvoiceData` and
-  `queryTransactionStatus` (and on invoice submission), and delays the rest. The default throttle keeps one such
+  `queryTransactionStatus`, `tokenExchange`, `manageInvoice` and `manageAnnulment`, and delays the rest. The default throttle keeps one such
   request per second within a process; the other queries are not throttled. If several processes share an
   IP address, pass a shared `throttle`: any object with `wait(operation_name)`, e.g. one using a database lock.
 
@@ -214,7 +275,7 @@ end
 
 The gem logs one line per request at `info` level: operation, request ID, attempt, HTTP status, duration and size.
 It never logs request or response XML, unless you set `log_payloads: true`; then both go to `debug`, with the
-login, password hash, signature and the base64 invoice data hidden.
+login, password hash, signature, exchange tokens and the base64 invoice and annulment data hidden.
 
 **Do not set `log_payloads` in production.** Even with invoice data hidden, the XML contains names, addresses, tax
 numbers and amounts of your partners, and for sole traders that is personal data. Use it against NAV's test
@@ -245,6 +306,9 @@ To call NAV for real, copy `.env.example` to `.env`, fill it in (never commit it
 ```sh
 bin/dev sh -c 'NAV_INTEGRATION=1 bundle exec rspec spec/integration'
 ```
+
+The submission spec sends an invented invoice, so it runs only against NAV's test environment and only with
+`NAV_ALLOW_SUBMISSION=1` and `NAV_EXCHANGE_KEY` set.
 
 NAV's XML schemas are copied into `schemas/`; see [schemas/README.md](schemas/README.md) for their source and how
 to update them.

@@ -17,6 +17,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Parameters are checked before sending (date ranges, open relational ranges, enums, amounts).
 - `log_payloads` setting; `DecodeError`; `SchemaValidator` can check invoices against the data schema.
 - `script/windows_smoke.rb` to check an installation on a machine without a compiler.
+- Invoice submission: `client.invoices.submit` (tokenExchange and manageInvoice, up to 100 invoices, gzip when
+  needed, `electronicInvoiceHash` for electronic invoices) and technical annulment: `client.invoices.annul`
+  (manageAnnulment). Submissions are sent once and never retried.
+- `client.transactions.wait` follows a submission until NAV has processed it; `client.transactions.reconcile`
+  finds out whether a submission without an answer arrived (spec 1.9.2).
+- `UnknownOutcomeError`, `ExchangeTokenError`, `SubmissionTooLargeError` and `TransportError#request_sent?`.
+- `ProcessingResult#final?` and `#pending?`; `TransactionStatus#finished?`, `#annulment_pending?` and `#annulled?`.
+- The `exchange_key` setting is checked (16 characters).
 
 ### Changed
 
@@ -24,6 +32,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   data is hidden even then.
 - `ApiError::TechnicalValidationMessage#result_code` is a Symbol (`:error`, `:critical`) instead of a String.
 - New runtime dependency: `bigdecimal` (any version shipped with Ruby 3.3 or later).
+- `INVALID_EXCHANGE_TOKEN` raises `ExchangeTokenError` (a `RequestError`).
 
 ## [0.1.0] - 2026-11-17
 
