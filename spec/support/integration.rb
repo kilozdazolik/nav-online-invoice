@@ -12,6 +12,7 @@ RSpec.shared_context "with NAV credentials" do
         password: env.fetch("NAV_PASSWORD"),
         signature_key: env.fetch("NAV_SIGNATURE_KEY"),
         tax_number: env.fetch("NAV_TAX_NUMBER"),
+        exchange_key: env["NAV_EXCHANGE_KEY"].to_s.empty? ? nil : env["NAV_EXCHANGE_KEY"],
         software: {
           id: env.fetch("NAV_SOFTWARE_ID"),
           name: "nav_online_invoice",
