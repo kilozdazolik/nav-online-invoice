@@ -8,15 +8,15 @@ module NavOnlineInvoice
       @client = client
     end
 
-    # Lists invoices issued by you (+:outbound+) or to you (+:inbound+), one page of up to 100 at a time.
+    # Lists invoices issued by you (`:outbound`) or to you (`:inbound`), one page of up to 100 at a time.
     #
-    # Give exactly one of +issue_date+, +ins_date+ and +original_invoice_number+. All filters must match.
+    # Give exactly one of `issue_date`, `ins_date` and `original_invoice_number`. All filters must match.
     #
     # @example
     #   page = client.invoices.digest(direction: :outbound, issue_date: Date.new(2026, 11, 1)..Date.new(2026, 11, 30),
     #                                 net_amount: 10_000..500_000)
     #   page.each { |invoice| puts "#{invoice.invoice_number} #{invoice.net_amount_huf}" }
-    # @param direction [Symbol] +:outbound+ or +:inbound+
+    # @param direction [Symbol] `:outbound` or `:inbound`
     # @param page [Integer]
     # @option filters [Range<Date>] :issue_date at most 35 days
     # @option filters [Range<Time>] :ins_date when NAV received them; inclusive, at most 840 hours
@@ -24,10 +24,10 @@ module NavOnlineInvoice
     # @option filters [String] :tax_number the other party (customer if outbound, supplier if inbound)
     # @option filters [String] :group_member_tax_number
     # @option filters [String] :name the other party's name, starting with this; at least 5 characters
-    # @option filters [Symbol] :category +:normal+, +:simplified+ or +:aggregate+
-    # @option filters [Symbol] :payment_method +:transfer+, +:cash+, +:card+, +:voucher+ or +:other+
-    # @option filters [Symbol] :appearance +:paper+, +:electronic+, +:edi+ or +:unknown+
-    # @option filters [Symbol] :source +:web+, +:xml+, +:mgm+, +:opg+ or +:osz+
+    # @option filters [Symbol] :category `:normal`, `:simplified` or `:aggregate`
+    # @option filters [Symbol] :payment_method `:transfer`, `:cash`, `:card`, `:voucher` or `:other`
+    # @option filters [Symbol] :appearance `:paper`, `:electronic`, `:edi` or `:unknown`
+    # @option filters [Symbol] :source `:web`, `:xml`, `:mgm`, `:opg` or `:osz`
     # @option filters [String] :currency ISO code, e.g. "EUR"
     # @option filters [Date, Range<Date>] :delivery_date a day, or a range with both ends
     # @option filters [Date, Range<Date>] :payment_date
@@ -36,8 +36,8 @@ module NavOnlineInvoice
     # @option filters [Numeric, Range] :vat_amount
     # @option filters [Numeric, Range] :vat_amount_huf
     # @option filters [String] :transaction_id invoices of one submission
-    # @option filters [Integer] :index with +transaction_id+: the invoice's position in it
-    # @option filters [Symbol] :operation with +transaction_id+: +:create+, +:modify+ or +:storno+
+    # @option filters [Integer] :index with `transaction_id`: the invoice's position in it
+    # @option filters [Symbol] :operation with `transaction_id`: `:create`, `:modify` or `:storno`
     # @return [Page<InvoiceDigest>]
     # @raise [ArgumentError] if a parameter is invalid
     def digest(direction:, page: 1, **filters)
@@ -66,7 +66,7 @@ module NavOnlineInvoice
     #     puts "#{element.operation} #{element.invoice_number}"
     #   end
     # @param invoice_number [String] the original invoice
-    # @param direction [Symbol] +:outbound+ or +:inbound+
+    # @param direction [Symbol] `:outbound` or `:inbound`
     # @param tax_number [String, nil] the other party's tax number
     # @param page [Integer]
     # @return [Page<InvoiceChainElement>]
@@ -91,9 +91,9 @@ module NavOnlineInvoice
     # @example
     #   client.invoices.check("INV-2026-0001", direction: :outbound) # => true
     # @param invoice_number [String]
-    # @param direction [Symbol] +:outbound+ (issued by you) or +:inbound+ (received)
+    # @param direction [Symbol] `:outbound` (issued by you) or `:inbound` (received)
     # @param batch_index [Integer, nil] the invoice within a batch modification
-    # @param supplier_tax_number [String, nil] only with +:inbound+
+    # @param supplier_tax_number [String, nil] only with `:inbound`
     # @return [Boolean]
     # @raise [ArgumentError] if a parameter is invalid
     def check(invoice_number, direction:, batch_index: nil, supplier_tax_number: nil)
@@ -126,10 +126,10 @@ module NavOnlineInvoice
     #   status = client.transactions.wait(submission.transaction_id)
     #   status.accepted?
     # @param items [Array<Hash>] in index order, each with:
-    #   +:operation+ (+:create+, +:modify+ or +:storno+), +:xml+ (the InvoiceData XML) and optionally
-    #   +:electronic_invoice_hash+ (+{ value:, crypto_type: "SHA3-512" or "SHA-256" }+, the hash of your own
+    #   `:operation` (`:create`, `:modify` or `:storno`), `:xml` (the InvoiceData XML) and optionally
+    #   `:electronic_invoice_hash` (`{ value:, crypto_type: "SHA3-512" or "SHA-256" }`, the hash of your own
     #   electronic invoice file; computed by the gem when the XML has completenessIndicator true)
-    # @param compress [Boolean, :auto] gzip the invoices; +:auto+ only when the request would be too large
+    # @param compress [Boolean, :auto] gzip the invoices; `:auto` only when the request would be too large
     # @return [Submission]
     # @raise [ConfigurationError] if the configuration has no exchange_key
     # @raise [ArgumentError, SchemaValidationError, SubmissionTooLargeError] before any request is sent
@@ -149,9 +149,9 @@ module NavOnlineInvoice
     #   submission = client.invoices.annul([{ reference: "INV-2026-0001", code: :erratic_data,
     #                                         reason: "Sent with a wrong customer" }])
     # @param items [Array<Hash>] in index order, each with:
-    #   +:reference+ (the invoice or modification number), +:code+ (+:erratic_data+, +:erratic_invoice_number+,
-    #   +:erratic_invoice_issue_date+ or +:erratic_electronic_hash_value+), +:reason+ (up to 1024 characters) and
-    #   optionally +:timestamp+ (a Time, now by default)
+    #   `:reference` (the invoice or modification number), `:code` (`:erratic_data`, `:erratic_invoice_number`,
+    #   `:erratic_invoice_issue_date` or `:erratic_electronic_hash_value`), `:reason` (up to 1024 characters) and
+    #   optionally `:timestamp` (a Time, now by default)
     # @return [Submission]
     # @raise [ConfigurationError] if the configuration has no exchange_key
     # @raise [ArgumentError, SchemaValidationError] before any request is sent

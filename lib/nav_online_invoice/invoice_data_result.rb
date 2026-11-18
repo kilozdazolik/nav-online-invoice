@@ -12,6 +12,10 @@ module NavOnlineInvoice
   #   @return [AuditData]
   # @!attribute electronic_invoice_hash
   #   @return [ElectronicInvoiceHash, nil] for electronic invoices
+  # @!attribute compressed
+  #   @return [Boolean] whether NAV received the invoice gzipped
+  # @!attribute raw_xml
+  #   @return [String] NAV's answer; it can hold names, addresses and invoice contents, so do not log it
   class InvoiceDataResult
     include Redacted
 

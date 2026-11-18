@@ -4,10 +4,11 @@ module NavOnlineInvoice
   class Configuration
     # Collects settings for {NavOnlineInvoice.configure}.
     #
-    # Only the settings that were assigned are passed on, so +throttle = nil+ turns the throttle off.
+    # Only the settings that were assigned are passed on, so `throttle = nil` turns the throttle off.
     class Builder
       include Redacted
 
+      # The settings that can be assigned.
       ATTRIBUTES = %i[
         environment login password password_hash signature_key exchange_key tax_number software logger log_payloads
         throttle validate_requests max_retries retry_base_delay open_timeout read_timeout write_timeout clock

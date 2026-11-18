@@ -3,7 +3,7 @@
 module NavOnlineInvoice
   # Rails integration, loaded only when Rails is present.
   #
-  # Uses the Rails logger unless a configuration sets its own, and turns +config.nav_online_invoice+ into the
+  # Uses the Rails logger unless a configuration sets its own, and turns `config.nav_online_invoice` into the
   # global configuration. It reads no credentials or environment variables: the application passes the values in.
   #
   # @example config/application.rb
@@ -24,7 +24,7 @@ module NavOnlineInvoice
       Railtie.configure(app.config.nav_online_invoice)
     end
 
-    # Sets the global configuration from +config.nav_online_invoice+; does nothing if it is empty.
+    # Sets the global configuration from `config.nav_online_invoice`; does nothing if it is empty.
     #
     # @param options [ActiveSupport::OrderedOptions]
     # @return [Configuration, nil]

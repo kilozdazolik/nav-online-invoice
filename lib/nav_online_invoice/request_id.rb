@@ -6,7 +6,7 @@ module NavOnlineInvoice
   # NAV requires a new, unique ID for every request, at most 30 characters of [+a-zA-Z0-9_]. The ID
   # is made of a prefix, the current time in milliseconds (base 36) and a random part.
   #
-  # Any object that responds to +call+ can replace it, see {Configuration#request_id_generator}.
+  # Any object that responds to `call` can replace it, see {Configuration#request_id_generator}.
   module RequestId
     module_function
 

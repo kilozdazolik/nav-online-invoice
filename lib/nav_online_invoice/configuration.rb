@@ -31,6 +31,7 @@ module NavOnlineInvoice
   class Configuration
     include Redacted
 
+    # The API's base URL in each environment.
     ENDPOINTS = {
       test: "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/",
       production: "https://api.onlineszamla.nav.gov.hu/invoiceService/v3/"
@@ -46,9 +47,9 @@ module NavOnlineInvoice
     DEFAULT_LOGGER = Object.new.freeze
     private_constant :DEFAULT_LOGGER
 
-    # @param environment [Symbol] +:test+ or +:production+; the two need separate technical users
+    # @param environment [Symbol] `:test` or `:production`; the two need separate technical users
     # @param login [String] the technical user's login
-    # @param password [String, nil] the technical user's password (or give +password_hash+)
+    # @param password [String, nil] the technical user's password (or give `password_hash`)
     # @param password_hash [String, nil] SHA-512 of the password, uppercase hex
     # @param signature_key [String] the technical user's signature key
     # @param exchange_key [String, nil] the exchange key, 16 characters; only needed to submit invoices
@@ -106,7 +107,7 @@ module NavOnlineInvoice
 
     # Returns a copy with the given settings changed.
     #
-    # Giving +password+ replaces the stored password hash.
+    # Giving `password` replaces the stored password hash.
     def with(**changes)
       return super unless changes.key?(:password)
 
@@ -140,7 +141,7 @@ module NavOnlineInvoice
     # @!attribute id
     #   @return [String] exactly 18 characters of [0-9A-Z-]; NAV suggests country code + tax number + suffix
     # @!attribute operation
-    #   @return [Symbol] +:local_software+ or +:online_service+
+    #   @return [Symbol] `:local_software` or `:online_service`
     # @!attribute dev_contact
     #   @return [String] a working e-mail address of the developer
     Software = Data.define(:id, :name, :operation, :main_version, :dev_name, :dev_contact, :dev_country_code,

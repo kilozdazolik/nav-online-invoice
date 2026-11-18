@@ -8,12 +8,16 @@ module NavOnlineInvoice
   #
   # @!attribute index
   #   @return [Integer] the position of the invoice in the submission, starting at 1
+  # @!attribute batch_index
+  #   @return [Integer, nil] the invoice within a batch modification
   # @!attribute status
-  #   @return [Symbol] +:received+, +:processing+, +:saved+, +:done+ or +:aborted+
+  #   @return [Symbol] `:received`, `:processing`, `:saved`, `:done` or `:aborted`
   # @!attribute technical_validation_messages
   #   @return [Array<TechnicalValidationMessage>]
   # @!attribute business_validation_messages
   #   @return [Array<BusinessValidationMessage>]
+  # @!attribute compressed
+  #   @return [Boolean, nil] whether the original request was gzipped
   # @!attribute original_request
   #   @return [String, nil] the submitted invoice XML, decoded; only if it was asked for
   class ProcessingResult

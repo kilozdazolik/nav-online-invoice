@@ -66,4 +66,6 @@ jobs:
           ruby-version: "4.0"
           bundler-cache: true
       - run: bundle exec rubocop
+      - name: API documentation builds without warnings
+        run: bundle exec yard doc --no-save --no-output --fail-on-warning
       - run: bundle exec rake release:check

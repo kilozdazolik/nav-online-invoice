@@ -15,9 +15,9 @@ module NavOnlineInvoice
   # Amounts are BigDecimal, dates Date, timestamps Time (UTC), NAV's codes lowercase Symbols.
   #
   # @!attribute operation
-  #   @return [Symbol] +:create+, +:modify+ or +:storno+
+  #   @return [Symbol] `:create`, `:modify` or `:storno`
   # @!attribute category
-  #   @return [Symbol] +:normal+, +:simplified+ or +:aggregate+
+  #   @return [Symbol] `:normal`, `:simplified` or `:aggregate`
   # @!attribute supplier_name
   #   @return [String] personal data if the supplier is a sole trader
   # @!attribute customer_name

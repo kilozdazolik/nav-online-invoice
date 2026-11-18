@@ -7,7 +7,7 @@ module NavOnlineInvoice
   # An address of a taxpayer, as NAV stores it.
   #
   # @!attribute type
-  #   @return [Symbol] +:hq+ (registered office), +:site+ or +:branch+
+  #   @return [Symbol] `:hq` (registered office), `:site` or `:branch`
   # @!attribute public_place_category
   #   @return [String] e.g. "UTCA" or "ÚT"
   class Address

@@ -4,13 +4,19 @@ module NavOnlineInvoice
   # A business rule finding of NAV on a submitted invoice.
   #
   # @!attribute result_code
-  #   @return [Symbol] +:error+ (the invoice is rejected), +:warn+ or +:info+
+  #   @return [Symbol] `:error` (the invoice is rejected), `:warn` or `:info`
   # @!attribute error_code
   #   @return [String, nil] NAV's code, e.g. "INVOICE_LINE_MISSING"
+  # @!attribute message
+  #   @return [String, nil] NAV's explanation, in Hungarian
   # @!attribute tag
   #   @return [String, nil] the element NAV points to
   # @!attribute line
   #   @return [Integer, nil] the invoice line NAV points to
+  # @!attribute value
+  #   @return [String, nil] the value NAV found
+  # @!attribute original_invoice_number
+  #   @return [String, nil] the invoice a modification refers to
   BusinessValidationMessage = Data.define(:result_code, :error_code, :message, :tag, :value, :line,
                                           :original_invoice_number)
 end

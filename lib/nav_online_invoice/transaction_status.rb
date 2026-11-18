@@ -11,10 +11,14 @@ module NavOnlineInvoice
   # @!attribute original_request_version
   #   @return [String] e.g. "3.0"
   # @!attribute annulment_verification_status
-  #   @return [Symbol, nil] for annulments only: +:not_verifiable+, +:verification_pending+,
-  #     +:verification_done+ or +:verification_rejected+
+  #   @return [Symbol, nil] for annulments only: `:not_verifiable`, `:verification_pending`,
+  #     `:verification_done` or `:verification_rejected`
+  # @!attribute annulment_decision_date
+  #   @return [Time, nil] when the annulment was approved or rejected on NAV's web interface
   # @!attribute annulment_decision_user
   #   @return [String, nil] login of the user who decided on the annulment
+  # @!attribute raw_xml
+  #   @return [String] NAV's answer; it can hold names, addresses and invoice contents, so do not log it
   class TransactionStatus
     include Redacted
 

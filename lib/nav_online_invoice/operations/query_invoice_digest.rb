@@ -22,7 +22,7 @@ module NavOnlineInvoice
       }.freeze
       private_constant :DIGEST_FIELDS
 
-      # @param direction [Symbol] +:outbound+ or +:inbound+
+      # @param direction [Symbol] `:outbound` or `:inbound`
       # @param page [Integer]
       # @param filters [Hash] see {Invoices#digest}
       # @raise [ArgumentError]

@@ -78,7 +78,7 @@ module NavOnlineInvoice
     # submission (spec 1.9.2).
     RECONCILE_WINDOW = (-300..600)
 
-    # The time range to search for a submission sent at +sent_at+.
+    # The time range to search for a submission sent at `sent_at`.
     #
     # @param sent_at [Time]
     # @return [Range<Time>]

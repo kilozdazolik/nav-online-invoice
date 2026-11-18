@@ -5,7 +5,7 @@ module NavOnlineInvoice
     # Lists an invoice and all its modifications.
     class QueryInvoiceChainDigest < Base
       # @param invoice_number [String] the original invoice
-      # @param direction [Symbol] +:outbound+ or +:inbound+
+      # @param direction [Symbol] `:outbound` or `:inbound`
       # @param tax_number [String, nil] the other party's tax number
       # @param page [Integer]
       # @raise [ArgumentError]

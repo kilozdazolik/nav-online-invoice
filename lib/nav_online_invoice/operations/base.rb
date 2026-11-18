@@ -7,7 +7,7 @@ module NavOnlineInvoice
   module Operations
     # The contract between an operation and {Client#execute}.
     #
-    # A subclass defines {#name}, {#build_body} and {#parse}, and validates its arguments in +initialize+, so a
+    # A subclass defines {#name}, {#build_body} and {#parse}, and validates its arguments in `initialize`, so a
     # bad argument fails before any request is built.
     class Base
       include XmlReader

@@ -11,9 +11,9 @@ module NavOnlineInvoice
   # @!attribute ins_cus_user
   #   @return [String] login of the technical user who sent it
   # @!attribute source
-  #   @return [Symbol] e.g. +:xml+ (machine interface) or +:web+
+  #   @return [Symbol] e.g. `:xml` (machine interface) or `:web`
   # @!attribute status
-  #   @return [Symbol] +:received+, +:processing+, +:saved+, +:finished+ or +:notified+
+  #   @return [Symbol] `:received`, `:processing`, `:saved`, `:finished` or `:notified`
   # @!attribute technical_annulment
   #   @return [Boolean] whether it is a technical annulment
   # @!attribute original_request_version

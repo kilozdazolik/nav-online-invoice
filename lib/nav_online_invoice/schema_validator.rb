@@ -5,10 +5,11 @@ module NavOnlineInvoice
   #
   # Each schema is loaded once, on first use, from the copies in the gem's schemas/ directory.
   module SchemaValidator
+    # Where the gem keeps NAV's schemas.
     SCHEMA_DIR = File.expand_path("../../schemas", __dir__)
 
-    # +:api+ for requests and responses, +:data+ for invoices in the 3.0 format, +:annulment+ for technical
-    # annulments, +:metrics+ for service metrics.
+    # `:api` for requests and responses, `:data` for invoices in the 3.0 format, `:annulment` for technical
+    # annulments, `:metrics` for service metrics.
     SCHEMAS = {
       api: "invoiceApi.xsd", data: "invoiceData.xsd", annulment: "invoiceAnnulment.xsd", metrics: "serviceMetrics.xsd"
     }.freeze

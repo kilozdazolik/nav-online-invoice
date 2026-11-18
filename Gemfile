@@ -14,3 +14,8 @@ gem "rubocop", "~> 1.70", require: false
 gem "rubocop-rake", require: false
 gem "rubocop-rspec", require: false
 gem "webmock", "~> 3.23"
+
+# API documentation (`bundle exec yard`); pure Ruby, so Windows needs no compiler.
+gem "kramdown", require: false
+gem "kramdown-parser-gfm", require: false
+gem "yard", require: false

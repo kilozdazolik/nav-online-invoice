@@ -11,7 +11,7 @@ module NavOnlineInvoice
   # @!attribute ins_cus_user
   #   @return [String] login of the technical user who sent it
   # @!attribute source
-  #   @return [Symbol] e.g. +:xml+ or +:web+
+  #   @return [Symbol] e.g. `:xml` or `:web`
   # @!attribute original_request_version
   #   @return [String] the format of the invoice, e.g. "3.0"
   class AuditData

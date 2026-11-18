@@ -11,12 +11,13 @@ module NavOnlineInvoice
   class Metrics
     include XmlReader
 
+    # The metrics service's base URL in each environment.
     ENDPOINTS = {
       test: "https://api-test.onlineszamla.nav.gov.hu/metricService/v3/queryServiceMetrics/",
       production: "https://api.onlineszamla.nav.gov.hu/metricService/v3/queryServiceMetrics/"
     }.freeze
 
-    # @param environment [Symbol] +:test+ or +:production+
+    # @param environment [Symbol] `:test` or `:production`
     # @param open_timeout [Numeric] seconds
     # @param read_timeout [Numeric] seconds
     # @param max_retries [Integer] how often a temporary network failure is retried

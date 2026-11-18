@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module NavOnlineInvoice
-  # Keeps at least +interval+ seconds between requests.
+  # Keeps at least `interval` seconds between requests.
   #
   # NAV allows one request per second per IP address on some operations and delays the rest. The
   # default instance is shared by every client in the process. If several processes share one IP
-  # address, pass your own object with a +wait(operation_name)+ method, e.g. one backed by a
+  # address, pass your own object with a `wait(operation_name)` method, e.g. one backed by a
   # database lock.
   class Throttle
     # @return [Throttle] the instance shared by all clients in this process

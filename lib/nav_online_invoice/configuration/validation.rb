@@ -3,6 +3,8 @@
 module NavOnlineInvoice
   class Configuration
     # Checks and normalizes the settings.
+    #
+    # @api private
     module Validation
       module_function
 

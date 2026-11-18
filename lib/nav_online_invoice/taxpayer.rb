@@ -11,7 +11,7 @@ module NavOnlineInvoice
   # @!attribute short_name
   #   @return [String, nil] NAV does not fill this at present
   # @!attribute incorporation
-  #   @return [Symbol] +:organization+, +:self_employed+ or +:taxable_person+
+  #   @return [Symbol] `:organization`, `:self_employed` or `:taxable_person`
   # @!attribute addresses
   #   @return [Array<Address>]
   class Taxpayer

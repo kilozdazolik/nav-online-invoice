@@ -8,13 +8,13 @@ module NavOnlineInvoice
   # One invoice in a chain: the original invoice or one of its modifications, as listed by {Invoices#chain_digest}.
   #
   # @!attribute operation
-  #   @return [Symbol] +:create+, +:modify+ or +:storno+
+  #   @return [Symbol] `:create`, `:modify` or `:storno`
   # @!attribute ins_date
   #   @return [Time] when NAV received it
   # @!attribute max_line_number
   #   @return [Integer, nil] the highest line number after this modification
   # @!attribute new_created_lines
-  #   @return [Array<Range<Integer>>] line numbers this modification added, e.g. +[3..4, 5..5]+
+  #   @return [Array<Range<Integer>>] line numbers this modification added, e.g. `[3..4, 5..5]`
   # @!attribute reference
   #   @return [InvoiceReference, nil] for modifications and storno invoices
   class InvoiceChainElement

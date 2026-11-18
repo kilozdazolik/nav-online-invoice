@@ -112,7 +112,7 @@ module NavOnlineInvoice
     # Turns a value into NAV relational conditions: a single value means EQ, a closed range GTE/LTE (or LT for an
     # exclusive end). NAV accepts no open ranges.
     #
-    # @param kind [Symbol] +:date+ or +:amount+
+    # @param kind [Symbol] `:date` or `:amount`
     # @return [Array<Array(String, String)>] operator and value pairs
     def relational(name, value, kind)
       return [["EQ", relational_value(name, value, kind)]] unless value.is_a?(Range)

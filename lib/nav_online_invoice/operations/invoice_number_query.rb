@@ -5,7 +5,7 @@ module NavOnlineInvoice
     # The invoiceNumberQuery shared by queryInvoiceData and queryInvoiceCheck.
     module InvoiceNumberQuery
       # @param invoice_number [String]
-      # @param direction [Symbol] +:outbound+ (issued by you) or +:inbound+ (received)
+      # @param direction [Symbol] `:outbound` (issued by you) or `:inbound` (received)
       # @param batch_index [Integer, nil] the invoice within a batch modification
       # @param supplier_tax_number [String, nil] for inbound invoices, when several suppliers used the number
       # @raise [ArgumentError]

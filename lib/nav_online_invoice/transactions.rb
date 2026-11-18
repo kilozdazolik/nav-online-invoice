@@ -33,7 +33,7 @@ module NavOnlineInvoice
 
     # Asks for the status until NAV has finished with every item, or until the timeout.
     #
-    # The pause between queries starts at +interval+ and grows to at most 15 seconds. It does not wait for
+    # The pause between queries starts at `interval` and grows to at most 15 seconds. It does not wait for
     # annulments to be approved.
     #
     # @example
@@ -95,7 +95,7 @@ module NavOnlineInvoice
     #   page = client.transactions.list(ins_date: (Time.now - 86_400)..Time.now)
     #   page.each { |transaction| puts transaction.transaction_id }
     # @param ins_date [Range<Time>] inclusive; at most 840 hours (35 days)
-    # @param status [Symbol, nil] +:received+, +:processing+, +:saved+, +:finished+ or +:notified+
+    # @param status [Symbol, nil] `:received`, `:processing`, `:saved`, `:finished` or `:notified`
     # @param page [Integer]
     # @return [Page<Transaction>]
     # @raise [ArgumentError] if a parameter is invalid
