@@ -10,14 +10,16 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Ruby client for the Hungarian NAV Online Invoice (Online Számla) API v3.0"
   spec.description = <<~DESC.tr("\n", " ").strip
-    A dependency-light client for the Hungarian Tax Authority's (NAV) Online Invoice API v3.0, with
-    request signing, schema validation, rate limiting and typed errors. Works with or without Rails.
+    A dependency-light client for the Hungarian Tax Authority's (NAV) Online Invoice API v3.0: invoice and
+    transaction queries, invoice submission and technical annulment, with request signing, schema validation,
+    rate limiting and typed errors. Submissions are sent once and never retried. Works with or without Rails.
   DESC
   spec.homepage = "https://github.com/kilozdazolik/nav-online-invoice"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3"
 
   spec.metadata = {
+    "homepage_uri" => spec.homepage,
     "source_code_uri" => spec.homepage,
     "changelog_uri" => "#{spec.homepage}/blob/v#{spec.version}/CHANGELOG.md",
     "documentation_uri" => "https://www.rubydoc.info/gems/nav_online_invoice/#{spec.version}",

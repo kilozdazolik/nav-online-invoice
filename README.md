@@ -21,7 +21,7 @@ Ruby client for the Hungarian Tax Authority's (NAV) **Online Invoice API v3.0** 
 
 ## Requirements
 
-- Ruby 3.3 or newer (CRuby; tested on 3.3, 3.4 and 4.0, on Linux and Windows)
+- Ruby 3.3 or newer (CRuby; tested on 3.3, 3.4 and 4.0 on Linux, and on 4.0 on Windows)
 - A NAV Online Invoice technical user: login, password and signature key. Test and production users are separate;
   register a test user at <https://onlineszamla-test.nav.gov.hu>.
 
@@ -71,14 +71,14 @@ result.matches?("12345678-2-42")      # => true if the VAT and county codes matc
 result.taxpayer.name                  # => "EXAMPLE KFT."
 result.taxpayer.tax_number            # => "12345678-2-42"
 result.taxpayer.incorporation         # => :organization, :self_employed or :taxable_person
-result.taxpayer.headquarters.city     # addresses: :hq, :site or :branch
+result.taxpayer.headquarters&.city    # addresses: :hq, :site or :branch
 result.request_id                     # for your logs
 ```
 
 An unknown tax number is not an error: `valid?` is `false` and `taxpayer` is `nil`. NAV checks only the first 8
 digits, so `valid?` is also true for `12345678-9-99`; use `matches?` to check a full tax number.
 
-The gem never reads environment variables or Rails credentials; pass the values in. Keep one `Client` per technical
+The gem itself never reads environment variables or Rails credentials; pass the values in. Keep one `Client` per technical
 user and reuse it; it is thread-safe.
 
 ### Querying invoices
@@ -110,7 +110,8 @@ single value or a range with both ends (`10_000..500_000`); NAV accepts no open 
 
 Parameters are checked before sending; a bad one raises `ArgumentError`. `data` returns `nil` when NAV has no such
 invoice for you. A long `each_digest` can walk many pages, and NAV's data can change while it does: set
-`max_pages` or narrow the filters.
+`max_pages` or narrow the filters. Every paged query has an `each_` method named after its items: `digest` and
+`each_digest`, `chain_digest` and `each_chain_element`, `transactions.list` and `each_transaction`.
 
 ### Transactions
 
@@ -141,12 +142,12 @@ submission.transaction_id                     # NAV received the request; proces
 status = client.transactions.wait(submission.transaction_id, timeout: 120)
 status.finished?                              # NAV finished with every invoice
 status.accepted?                              # ... and all of them are DONE without errors
-status.results.reject(&:done?).map(&:index)   # positions (from 1) to fix and submit again
+status.results.reject { |r| r.done? && !r.errors? }.map(&:index) # positions (from 1) to fix and submit again
 ```
 
-- **Sent once, never retried.** A NAV error answer (`ApiError`) means nothing was stored, so the invoices can be
-  sent again. `UnknownOutcomeError` means the request was sent but no answer arrived: the invoices may be at NAV.
-  Do not resend them blindly; after five minutes, ask NAV:
+- **Sent once, never retried.** A NAV error answer (`ApiError`), or a 4xx without one, means nothing was stored, so
+  the invoices can be sent again. `UnknownOutcomeError` means the request was sent but no answer arrived: the
+  invoices may be at NAV. Do not resend them blindly; after five minutes, ask NAV:
 
   ```ruby
   rescue NavOnlineInvoice::UnknownOutcomeError => e
@@ -155,12 +156,16 @@ status.results.reject(&:done?).map(&:index)   # positions (from 1) to fix and su
     # => { "INV-2026-0001" => ["4Q8O2ZCTX1J8WGZ2"] }; submit the rest again
   ```
 
+  `e.sent_at` is NAV's time of sending, worked out from the exchange token, so a wrong local clock does not hide the
+  transaction. Aborted submissions do not count as arrived; for annulments pass `annulment: true`.
+
 - **Partial failures.** Each invoice is processed on its own. Submit only the aborted ones again, in a new call.
 - **Size.** NAV accepts at most 10 MB per request and 15 MB per invoice. With `compress: :auto` (the default) the
   invoices are gzipped only when the request would be too large; `compress: true` or `false` decides yourself.
 - **Electronic invoices.** When the XML itself is the electronic invoice (`completenessIndicator` true), the gem
   computes its `electronicInvoiceHash`. Otherwise pass the hash of your own electronic invoice file:
-  `electronic_invoice_hash: { value: "...", crypto_type: "SHA-256" }` (or `"SHA3-512"`).
+  `electronic_invoice_hash: { value: "...", crypto_type: "SHA-256" }` (or `"SHA3-512"`). The submission returns the
+  hashes it sent as `NavOnlineInvoice::ElectronicInvoiceHash` values.
 - `wait` returns the last status at the timeout instead of raising; store it and ask again later with `status`.
 
 ### Technical annulment
@@ -211,7 +216,8 @@ metrics.definitions                                                    # names a
 
 Dates are `Date`, timestamps `Time` in UTC, amounts `BigDecimal`, NAV's codes lowercase symbols (`:outbound`,
 `:storno`, `:done`). Paged queries return a `NavOnlineInvoice::Page` with `items`, `current_page` and
-`total_pages`. `inspect` and `pp` of the results leave out names, addresses, amounts and invoice contents.
+`total_pages` (and `last_page?`). `inspect` and `pp` of the results leave out names, addresses, amounts and invoice
+contents.
 
 ### Global configuration
 
@@ -252,8 +258,8 @@ config.nav_online_invoice.login = Rails.application.credentials.dig(:nav, :login
 
 - `Rails.logger` is the default logger, unless a configuration sets its own.
 - An unknown or invalid setting stops the application at boot with a `ConfigurationError`.
-- Rails' default `filter_parameters` (`:passw`, `:_key`, `:token`, `:secret`) already hide the password and the
-  keys in the Rails log.
+- The gem logs none of its settings. Rails' default `filter_parameters` (`:passw`, `:_key`, `:token`, `:secret`)
+  cover the password and the keys if your own code passes them as request parameters; the login is not secret.
 - For several companies, skip the global configuration and keep one `Client` per company.
 
 The gem ships no background jobs; follow submissions from your own:
@@ -280,10 +286,10 @@ end
 | `retry_base_delay` | `1.0` | seconds before the first retry; doubles on each retry |
 | `throttle` | shared `Throttle` | at most one request per second per process; `nil` turns it off |
 | `validate_requests` | `true` | check each request against NAV's schema before sending |
-| `logger` | `nil` | one line per request at `info`, without any content |
+| `logger` | `NavOnlineInvoice.default_logger` (`Rails.logger` under Rails) | one line per request at `info`, without any content; `nil` for none |
 | `log_payloads` | `false` | also log the XML at `debug`; never in production, see below |
 | `request_id_generator` | `NavOnlineInvoice::RequestId` | any object with `call` |
-| `exchange_key` | `nil` | only needed to submit invoices (not supported yet) |
+| `exchange_key` | `nil` | 16 characters; only needed to submit invoices and annulments |
 | `clock` | `Time.method(:now)` | any object with `call` returning a `Time`; for tests |
 
 For an interactive lookup, e.g. on a form, use a shorter `read_timeout` and fewer retries:
@@ -306,7 +312,7 @@ can succeed.
 | `CustomerError` | `NOT_REGISTERED_CUSTOMER`, `INVALID_CUSTOMER`, `INVALID_USER_RELATION`, ... | no |
 | `RequestError` | `INVALID_REQUEST`, `INVALID_TIMESTAMP`, `BAD_QUERY_PARAM_*`, ... | no |
 | `ExchangeTokenError` | `INVALID_EXCHANGE_TOKEN`: wrong exchange key, or the token expired; nothing was stored | no (`retryable?` is true) |
-| `MaintenanceError` | NAV is under maintenance | no (`retryable?` is true: try again later) |
+| `MaintenanceError` | NAV is under maintenance, or a network device answered 503 | only a query's bare 503 (`retryable?` is true: try again later) |
 | `TemporaryError` | `OPERATION_FAILED`, `REQUEST_ID_NOT_UNIQUE` | yes, except submissions |
 | `DecodeError` | NAV sent invoice data that is not valid base64, gzip or UTF-8, or a token the exchange key does not decrypt | no |
 
@@ -331,9 +337,9 @@ end
   ID of a request it refused with `FORBIDDEN` or `INVALID_REQUEST_SIGNATURE`.
 - Only temporary failures of queries and token requests are retried. Submissions (`submit`, `annul`) are never
   retried. In the worst case one call takes about `(max_retries + 1) × read_timeout`.
-- NAV allows **one request per second per IP address** on `queryTaxpayer`, `queryInvoiceData` and
-  `queryTransactionStatus`, `tokenExchange`, `manageInvoice` and `manageAnnulment`, and delays the rest. The default throttle keeps one such
-  request per second within a process; the other queries are not throttled. If several processes share an
+- NAV allows **one request per second per IP address** on `queryTaxpayer`, `queryInvoiceData`,
+  `queryTransactionStatus`, `tokenExchange`, `manageInvoice` and `manageAnnulment`, and delays the rest. The default
+  throttle keeps one such request per second within a process; the other queries are not throttled. If several processes share an
   IP address, pass a shared `throttle`: any object with `wait(operation_name)`, e.g. one using a database lock.
 
 ### Logging and personal data
@@ -351,7 +357,7 @@ environment only.
 The gem needs no compiler: `nokogiri` ships precompiled, and `bigdecimal` comes with Ruby. Keep your lock file on
 the `bigdecimal` version your Ruby ships with (`gem list bigdecimal`), because there is no precompiled Windows build
 of newer versions. To check an installation on a machine without a compiler, run
-[script/windows_smoke.rb](script/windows_smoke.rb) after `gem install --local nav_online_invoice-X.Y.Z.gem`.
+[script/windows_smoke.rb](https://github.com/kilozdazolik/nav-online-invoice/blob/main/script/windows_smoke.rb) after `gem install --local nav_online_invoice-X.Y.Z.gem`.
 
 ## Development
 
@@ -382,8 +388,8 @@ to update them.
 
 1. Update `VERSION` in `lib/nav_online_invoice/version.rb` and add a matching section to `CHANGELOG.md`.
 2. Run `bin/dev bundle exec rake release:check`.
-3. Commit (`Release 0.1.0`), push and wait for CI.
-4. Tag and push: `git tag -a v0.1.0 -m "Version 0.1.0" && git push origin v0.1.0`. GitHub Actions publishes the
+3. Commit (`Release X.Y.Z`), push and wait for CI.
+4. Tag and push: `git tag -a vX.Y.Z -m "Version X.Y.Z" && git push origin vX.Y.Z`. GitHub Actions publishes the
    gem to RubyGems via trusted publishing and creates the GitHub release from the CHANGELOG section.
 
 ## Changelog

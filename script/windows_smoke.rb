@@ -44,8 +44,24 @@ end
 
 check.call("invoice data schema loads") { NavOnlineInvoice::SchemaValidator.errors("<x/>", schema: :data).any? }
 check.call("BigDecimal amounts") { NavOnlineInvoice::Params.amount(:amount, BigDecimal("1234.5")) == "1234.50" }
-check.call("gzip decoding") do
-  NavOnlineInvoice::Payload.decode([Zlib.gzip("<InvoiceData/>")].pack("m0"), compressed: true) == "<InvoiceData/>"
+check.call("gzip encoding and decoding") do
+  encoded = NavOnlineInvoice::Payload.encode("<InvoiceData/>", compressed: true)
+  NavOnlineInvoice::Payload.decode(encoded, compressed: true) == "<InvoiceData/>"
+end
+check.call("AES-128-ECB exchange token decryption") do
+  cipher = OpenSSL::Cipher.new("AES-128-ECB").encrypt
+  cipher.key = "smoke-exchange-1"
+  encoded = [cipher.update("SMOKE-TOKEN") + cipher.final].pack("m0")
+  NavOnlineInvoice::Crypto.decrypt_token(encoded, "smoke-exchange-1") == "SMOKE-TOKEN"
+end
+check.call("invoice submission request is valid") do
+  invoice = NavOnlineInvoice::Payload.encode("<InvoiceData/>", compressed: false)
+  token = NavOnlineInvoice::ExchangeToken.new(value: "SMOKE-TOKEN", valid_from: Time.now, valid_to: Time.now + 300,
+                                              received_at: NavOnlineInvoice::Monotonic.now)
+  item = NavOnlineInvoice::Operations::Manage::Item.new(operation: "CREATE", data: invoice)
+  operation = NavOnlineInvoice::Operations::ManageInvoice.new(token:, items: [item], compressed: false)
+  xml = NavOnlineInvoice::RequestBuilder.new(config).build(operation, request_id: "SMOKE2", time: Time.now)
+  NavOnlineInvoice::SchemaValidator.errors(xml).empty?
 end
 
 abort "#{failures.size} check(s) failed." unless failures.empty?
