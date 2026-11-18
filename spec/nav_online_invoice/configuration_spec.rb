@@ -35,11 +35,17 @@ RSpec.describe NavOnlineInvoice::Configuration do
     signature_key: " ",
     read_timeout: 0,
     max_retries: -1,
-    clock: "now"
+    clock: "now",
+    exchange_key: "too-short"
   }.each do |key, value|
     it "rejects an invalid #{key}" do
       expect { build_config(key => value) }.to raise_error(NavOnlineInvoice::ConfigurationError, /#{key}/)
     end
+  end
+
+  it "accepts a 16 character exchange key or none" do
+    expect(build_config(exchange_key: "spec-exchange-k1").exchange_key).to eq("spec-exchange-k1")
+    expect(build_config(exchange_key: nil).exchange_key).to be_nil
   end
 
   it "rejects invalid software data" do
@@ -52,9 +58,10 @@ RSpec.describe NavOnlineInvoice::Configuration do
   end
 
   it "hides the credentials in inspect" do
-    output = build_config.inspect
+    config = build_config(exchange_key: "spec-exchange-k1")
+    output = config.inspect
 
-    expect(output).not_to include("specuser0000001", "spec-signature-key", build_config.password_hash)
+    expect(output).not_to include("specuser0000001", "spec-signature-key", "spec-exchange-k1", config.password_hash)
     expect(output).to include("login=[FILTERED]", "tax_number=\"12345678\"")
   end
 

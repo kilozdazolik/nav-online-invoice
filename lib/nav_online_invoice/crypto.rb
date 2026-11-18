@@ -36,6 +36,25 @@ module NavOnlineInvoice
       sha3("#{operation}#{base64_data}")
     end
 
+    # Decrypts the exchange token that tokenExchange returns.
+    #
+    # @param encoded [String] the encodedExchangeToken value, Base64
+    # @param exchange_key [String] the technical user's exchange key
+    # @return [String] the token to send in manageInvoice and manageAnnulment
+    # @raise [DecodeError] if the token cannot be decrypted with this key
+    def decrypt_token(encoded, exchange_key)
+      cipher = OpenSSL::Cipher.new("AES-128-ECB").decrypt
+      cipher.key = exchange_key
+      bytes = encoded.to_s.delete(" \t\r\n").unpack1("m0")
+      token = (cipher.update(bytes) + cipher.final).force_encoding(Encoding::UTF_8)
+      # A wrong key passes the padding check now and then, so the result is checked as well.
+      return token if token.valid_encoding? && token.match?(/\A[[:graph:]]{1,50}\z/)
+
+      raise DecodeError, "the exchange token could not be decrypted; check exchange_key"
+    rescue OpenSSL::Cipher::CipherError, ArgumentError
+      raise DecodeError, "the exchange token could not be decrypted; check exchange_key"
+    end
+
     def sha3(value)
       OpenSSL::Digest.new("SHA3-512").hexdigest(value).upcase
     end

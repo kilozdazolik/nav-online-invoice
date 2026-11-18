@@ -45,7 +45,7 @@ module NavOnlineInvoice
     # @param password [String, nil] the technical user's password (or give +password_hash+)
     # @param password_hash [String, nil] SHA-512 of the password, uppercase hex
     # @param signature_key [String] the technical user's signature key
-    # @param exchange_key [String, nil] the exchange key; only needed to submit invoices
+    # @param exchange_key [String, nil] the exchange key, 16 characters; only needed to submit invoices
     # @param tax_number [String] the technical user's company, 8 or 11 digits
     # @param software [Hash, Software] the software data NAV requires in every request
     # @param logger [Logger, nil] gets one line per request, without any content
@@ -72,7 +72,7 @@ module NavOnlineInvoice
         login: Validation.login(login),
         password_hash: Validation.password_hash(password, password_hash),
         signature_key: Validation.required(:signature_key, signature_key),
-        exchange_key: exchange_key,
+        exchange_key: Validation.exchange_key(exchange_key),
         tax_number: Validation.tax_number(tax_number),
         software: Validation.software(software),
         logger: logger,
@@ -214,6 +214,12 @@ module NavOnlineInvoice
         return hash if hash.match?(/\A[0-9A-F]{128}\z/)
 
         raise ConfigurationError, "password_hash must be a SHA-512 hex digest"
+      end
+
+      def exchange_key(value)
+        return value if value.nil? || (value.is_a?(String) && value.bytesize == 16 && !value.strip.empty?)
+
+        raise ConfigurationError, "exchange_key must be 16 characters"
       end
 
       def tax_number(value)

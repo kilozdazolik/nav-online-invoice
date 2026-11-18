@@ -52,7 +52,8 @@ module NavOnlineInvoice
     end
   end
 
-  # NAV sent invoice data that could not be decoded (not valid base64, gzip or UTF-8).
+  # NAV sent data that could not be decoded: invoice data that is not valid base64, gzip or UTF-8, or an
+  # exchange token that does not decrypt with the exchange key.
   class DecodeError < Error; end
 
   # NAV answered with an error code.

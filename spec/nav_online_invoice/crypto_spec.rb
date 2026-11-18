@@ -42,4 +42,42 @@ RSpec.describe NavOnlineInvoice::Crypto do
         .to start_with("C5ADE8A2")
     end
   end
+
+  describe ".decrypt_token" do
+    let(:key) { "spec-exchange-k1" }
+
+    def encrypt(token, key)
+      cipher = OpenSSL::Cipher.new("AES-128-ECB").encrypt
+      cipher.key = key
+      [cipher.update(token) + cipher.final].pack("m0")
+    end
+
+    it "decrypts a token encrypted with AES-128-ECB" do
+      expect(described_class.decrypt_token("RPhlHKAJqPKVpOhEjIfPAHYVFPFtVMDB+nVG5+0lomY=", key))
+        .to eq("SPEC-TOKEN-0123456789-ABCDEF")
+    end
+
+    it "round-trips a token and accepts line breaks in the base64" do
+      encoded = encrypt("2E0B4C6F-SPEC", key).scan(/.{1,8}/).join("\n")
+
+      expect(described_class.decrypt_token(encoded, key)).to eq("2E0B4C6F-SPEC")
+    end
+
+    it "rejects a token encrypted with another key" do
+      expect { described_class.decrypt_token(encrypt("SPEC-TOKEN", "another-key-0000"), key) }
+        .to raise_error(NavOnlineInvoice::DecodeError, /exchange_key/)
+    end
+
+    it "rejects a decrypted value that cannot be a token" do
+      expect { described_class.decrypt_token(encrypt("x" * 51, key), key) }
+        .to raise_error(NavOnlineInvoice::DecodeError)
+      expect { described_class.decrypt_token(encrypt(" ", key), key) }.to raise_error(NavOnlineInvoice::DecodeError)
+    end
+
+    it "rejects data that is not base64 or not a whole block" do
+      expect { described_class.decrypt_token("not base64!", key) }.to raise_error(NavOnlineInvoice::DecodeError)
+      expect { described_class.decrypt_token(["short"].pack("m0"), key) }
+        .to raise_error(NavOnlineInvoice::DecodeError)
+    end
+  end
 end
