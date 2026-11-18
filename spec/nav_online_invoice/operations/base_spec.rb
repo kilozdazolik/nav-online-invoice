@@ -12,6 +12,10 @@ RSpec.describe NavOnlineInvoice::Operations::Base do
     expect([operation.rate_limited?, operation.auto_retry?]).to eq([true, false])
   end
 
+  it "adds no index hashes to the signature" do
+    expect(operation.index_hashes).to eq([])
+  end
+
   it "requires the subclass to define the operation" do
     expect { described_class.new.name }.to raise_error(NotImplementedError)
     expect { operation.build_body(nil) }.to raise_error(NotImplementedError)

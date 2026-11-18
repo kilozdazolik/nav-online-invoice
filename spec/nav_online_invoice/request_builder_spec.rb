@@ -2,9 +2,9 @@
 
 RSpec.describe NavOnlineInvoice::RequestBuilder do
   let(:operation) do
-    Struct.new(:request_root) do
+    Struct.new(:request_root, :index_hashes) do
       def build_body(xml) = xml.taxNumber("22222222")
-    end.new("QueryTaxpayerRequest")
+    end.new("QueryTaxpayerRequest", [])
   end
 
   it "reproduces NAV's official sample request exactly" do
@@ -32,5 +32,18 @@ RSpec.describe NavOnlineInvoice::RequestBuilder do
 
     expect(xml).to include("Kovács &amp; Társa &lt;Kft&gt;")
     expect(xml).to be_valid_nav_xml
+  end
+
+  it "appends the index hashes to the signature (spec 1.5.1)" do
+    config = official_sample_config.with(signature_key: "ce-8f5e-215119fa7dd621DLMRHRLH2S")
+    operation.index_hashes = [NavOnlineInvoice::Crypto.index_hash("CREATE", "QWJjZDEyMzQ="),
+                              NavOnlineInvoice::Crypto.index_hash("MODIFY", "RGNiYTQzMjE=")]
+    xml = described_class.new(config).build(operation, request_id: "TSTKFT1222564",
+                                                       time: Time.utc(2017, 12, 30, 18, 25, 45))
+
+    expect(Nokogiri::XML(xml).at_xpath("//common:requestSignature", NavOnlineInvoice::NAMESPACES).text).to eq(
+      "60BC80609EE3B8F42FE904200A49A1921A1DADA08D55319ACD40C59F626514B7" \
+      "4EEA49011D372600A10DBCF8199D590DA9C2841D987308F2D83DAE17C2470C42"
+    )
   end
 end

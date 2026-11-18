@@ -31,6 +31,11 @@ module NavOnlineInvoice
       # False unless a subclass says otherwise, because an operation that changes data must never be sent twice.
       def auto_retry? = false
 
+      # The hashes of the submitted items that are part of the request signature, in index order (spec 1.5.1).
+      #
+      # @return [Array<String>] empty for every operation but manageInvoice and manageAnnulment
+      def index_hashes = []
+
       # Writes the operation's elements after the shared header, user and software parts.
       #
       # @param xml [Nokogiri::XML::Builder]

@@ -13,7 +13,7 @@ module NavOnlineInvoice
       @config = config
     end
 
-    # @param operation [#request_root, #build_body] the operation to build
+    # @param operation [#request_root, #index_hashes, #build_body] the operation to build
     # @param request_id [String]
     # @param time [Time] written into the header and used for the signature
     # @return [String] the request XML
@@ -22,7 +22,7 @@ module NavOnlineInvoice
         xml.public_send(operation.request_root, "xmlns" => NAMESPACES["api"],
                                                 "xmlns:common" => NAMESPACES["common"]) do
           header(xml, request_id, time)
-          user(xml, request_id, time)
+          user(xml, request_id, time, operation.index_hashes)
           software(xml)
           operation.build_body(xml)
         end
@@ -40,13 +40,13 @@ module NavOnlineInvoice
       end
     end
 
-    def user(xml, request_id, time)
+    def user(xml, request_id, time, index_hashes)
+      signature = Crypto.request_signature(request_id, time, @config.signature_key, index_hashes:)
       xml["common"].user do
         xml["common"].login @config.login
         xml["common"].passwordHash(@config.password_hash, "cryptoType" => "SHA-512")
         xml["common"].taxNumber @config.tax_number
-        xml["common"].requestSignature(Crypto.request_signature(request_id, time, @config.signature_key),
-                                       "cryptoType" => "SHA3-512")
+        xml["common"].requestSignature(signature, "cryptoType" => "SHA3-512")
       end
     end
 
