@@ -6,9 +6,9 @@ module NavOnlineInvoice
   # @api private
   module Redactor
     FILTERED = "[FILTERED]"
-    ELEMENTS = %w[login passwordHash requestSignature].freeze
+    ELEMENTS = %w[login passwordHash requestSignature exchangeToken encodedExchangeToken].freeze
 
-    PAYLOADS = %w[invoiceData originalRequest].freeze
+    PAYLOADS = %w[invoiceData invoiceAnnulment originalRequest].freeze
 
     PATTERN = %r{(<(?:\w+:)?(?:#{ELEMENTS.join("|")})(?:\s[^>]*)?>)[^<]*(</)}
     PAYLOAD_PATTERN = %r{(<(?:\w+:)?(?:#{PAYLOADS.join("|")})(?:\s[^>]*)?>)([^<]*)(</)}
@@ -16,7 +16,7 @@ module NavOnlineInvoice
 
     module_function
 
-    # Replaces the login, password hash and signature, and the base64 invoice data, with [FILTERED].
+    # Replaces the credentials, the exchange tokens and the base64 invoice and annulment data with [FILTERED].
     #
     # @param xml [String]
     # @return [String]

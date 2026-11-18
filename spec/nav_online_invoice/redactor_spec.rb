@@ -22,6 +22,16 @@ RSpec.describe NavOnlineInvoice::Redactor do
     )
   end
 
+  it "hides exchange tokens and annulment data" do
+    xml = "<encodedExchangeToken>c2VjcmV0</encodedExchangeToken><api:exchangeToken>SECRET-TOKEN</api:exchangeToken>" \
+          "<invoiceAnnulment>UkVBU09O</invoiceAnnulment>"
+
+    expect(described_class.redact(xml)).to eq(
+      "<encodedExchangeToken>[FILTERED]</encodedExchangeToken><api:exchangeToken>[FILTERED]</api:exchangeToken>" \
+      "<invoiceAnnulment>[FILTERED 8 bytes]</invoiceAnnulment>"
+    )
+  end
+
   it "keeps everything else" do
     expect(redacted).to include("<common:requestId>RID215118906689</common:requestId>",
                                 "<taxNumber>22222222</taxNumber>")
