@@ -9,6 +9,7 @@ RSpec.describe NavOnlineInvoice::ApiError do
       "INVALID_USER_RELATION" => NavOnlineInvoice::CustomerError,
       "INVALID_TIMESTAMP" => NavOnlineInvoice::RequestError,
       "BAD_QUERY_PARAM_OVERLAP" => NavOnlineInvoice::RequestError,
+      "INVALID_EXCHANGE_TOKEN" => NavOnlineInvoice::ExchangeTokenError,
       "MAINTENANCE_MODE" => NavOnlineInvoice::MaintenanceError,
       "OPERATION_FAILED" => NavOnlineInvoice::TemporaryError,
       "REQUEST_ID_NOT_UNIQUE" => NavOnlineInvoice::TemporaryError
@@ -24,8 +25,9 @@ RSpec.describe NavOnlineInvoice::ApiError do
   end
 
   describe "#retryable?" do
-    it "is true only for temporary failures and maintenance" do
-      retryable = [NavOnlineInvoice::TemporaryError, NavOnlineInvoice::MaintenanceError]
+    it "is true only for temporary failures, maintenance and rejected exchange tokens" do
+      retryable = [NavOnlineInvoice::TemporaryError, NavOnlineInvoice::MaintenanceError,
+                   NavOnlineInvoice::ExchangeTokenError]
       others = [described_class, NavOnlineInvoice::PermissionError, NavOnlineInvoice::AuthenticationError]
 
       expect(retryable.map { |k| k.new(code: "X").retryable? }).to all(be(true))

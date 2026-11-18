@@ -56,4 +56,20 @@ RSpec.describe NavOnlineInvoice::Transport do
     expect { transport.post(uri, "<request/>") }.to raise_error(NavOnlineInvoice::TransportError)
     expect(a_request(:post, uri)).to have_been_made.once
   end
+
+  it "marks a failure while connecting as not sent" do
+    http = Net::HTTP.new(uri.host, uri.port)
+    allow(http).to receive(:start).and_raise(Net::OpenTimeout)
+    allow(Net::HTTP).to receive(:new).and_return(http)
+
+    expect { transport.post(uri, "<request/>") }
+      .to raise_error(NavOnlineInvoice::TransportError) { |error| expect(error).not_to be_request_sent }
+  end
+
+  it "marks a failure after connecting as possibly sent" do
+    stub_request(:post, uri).to_raise(Net::ReadTimeout)
+
+    expect { transport.post(uri, "<request/>") }
+      .to raise_error(NavOnlineInvoice::TransportError, &:request_sent?)
+  end
 end

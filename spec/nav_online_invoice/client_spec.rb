@@ -107,6 +107,83 @@ RSpec.describe NavOnlineInvoice::Client do
     expect(log.string).not_to include(config.password_hash, "specuser0000001")
   end
 
+  describe "submissions" do
+    let(:submit_endpoint) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/manageInvoice" }
+    let(:submission) do
+      Class.new(NavOnlineInvoice::Operations::Base) do
+        attr_accessor :max_body_bytes
+
+        def name = "manageInvoice"
+        def submission? = true
+        def index_hashes = %w[HASH1 HASH2]
+        def build_body(_xml); end
+        def parse(*, **) = :sent
+      end.new
+    end
+    let(:client) { described_class.new(config.with(validate_requests: false, clock: -> { Time.utc(2026, 11, 18, 9) })) }
+
+    def submit
+      client.execute(submission)
+    end
+
+    it "raises UnknownOutcomeError when no answer arrives, without sending again" do
+      stub_request(:post, submit_endpoint).to_timeout
+
+      expect { submit }.to raise_error(NavOnlineInvoice::UnknownOutcomeError) { |error|
+        expect(error).to have_attributes(operation: "manageInvoice", request_id: "RID1", item_count: 2,
+                                         sent_at: Time.utc(2026, 11, 18, 9), retryable?: false)
+        expect(error.reconcile_window).to eq(Time.utc(2026, 11, 18, 8, 59)..Time.utc(2026, 11, 18, 9, 10))
+      }
+      expect(a_request(:post, submit_endpoint)).to have_been_made.once
+    end
+
+    [502, 503, 504].each do |status|
+      it "raises UnknownOutcomeError on HTTP #{status} without a NAV answer" do
+        stub_request(:post, submit_endpoint).to_return(status:, body: "<html>Gateway</html>")
+
+        expect { submit }.to raise_error(NavOnlineInvoice::UnknownOutcomeError)
+        expect(a_request(:post, submit_endpoint)).to have_been_made.once
+      end
+    end
+
+    it "raises the NAV error of a rejected submission, without sending again" do
+      stub_request(:post, submit_endpoint).to_return(nav_answer("general_error/operation_failed.xml", status: 500))
+
+      expect { submit }.to raise_error(NavOnlineInvoice::TemporaryError)
+      expect(a_request(:post, submit_endpoint)).to have_been_made.once
+    end
+
+    it "keeps NAV's maintenance answer, since nothing was stored" do
+      stub_request(:post, submit_endpoint).to_return(nav_answer("general_error/maintenance_mode.xml", status: 503))
+
+      expect { submit }.to raise_error(NavOnlineInvoice::MaintenanceError)
+    end
+
+    it "keeps a connection failure, since nothing was sent" do
+      http = Net::HTTP.new("api-test.onlineszamla.nav.gov.hu", 443)
+      allow(http).to receive(:start).and_raise(Net::OpenTimeout)
+      allow(Net::HTTP).to receive(:new).and_return(http)
+
+      expect { submit }.to raise_error(NavOnlineInvoice::TransportError) { |error| expect(error).not_to be_request_sent }
+      expect(http).to have_received(:start).once
+    end
+
+    it "does not send a request over the size limit" do
+      submission.max_body_bytes = 100
+
+      expect { submit }.to raise_error(NavOnlineInvoice::SubmissionTooLargeError, /at most 100/)
+      expect(a_request(:post, submit_endpoint)).not_to have_been_made
+    end
+
+    it "lets the operation stop the request after the throttle" do
+      allow(submission).to receive(:check_before_send!).and_raise(NavOnlineInvoice::ExchangeTokenError.new(code: nil))
+
+      expect { submit }.to raise_error(NavOnlineInvoice::ExchangeTokenError)
+      expect(throttle).to have_received(:wait).with("manageInvoice")
+      expect(a_request(:post, submit_endpoint)).not_to have_been_made
+    end
+  end
+
   describe "rate limiting" do
     november = Date.new(2026, 11, 1)..Date.new(2026, 11, 30)
     day = Time.utc(2026, 11, 16)..Time.utc(2026, 11, 17)

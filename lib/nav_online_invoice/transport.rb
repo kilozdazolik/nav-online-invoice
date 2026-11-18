@@ -25,18 +25,23 @@ module NavOnlineInvoice
     # @return [Response]
     # @raise [TransportError] if no answer arrived
     def post(uri, body)
-      response = http(uri).start { |connection| connection.request(request(uri, body)) }
+      connected = false
+      response = http(uri).start do |connection|
+        connected = true
+        connection.request(request(uri, body))
+      end
       Response.new(status: response.code.to_i, body: response.body.to_s.dup.force_encoding(Encoding::UTF_8))
     rescue *NETWORK_ERRORS => e
-      raise transport_error(e)
+      raise transport_error(e, request_sent: connected)
     end
 
     private
 
-    def transport_error(error)
+    # A failure while connecting (DNS, refused, open timeout, TLS) means nothing was sent.
+    def transport_error(error, request_sent:)
       # A certificate that cannot be verified will not fix itself on retry.
       certificate = error.is_a?(OpenSSL::SSL::SSLError) && error.message.include?("certificate verify failed")
-      TransportError.new("#{error.class}: #{error.message}", retryable: !certificate)
+      TransportError.new("#{error.class}: #{error.message}", retryable: !certificate, request_sent:)
     end
 
     def http(uri)

@@ -41,16 +41,65 @@ module NavOnlineInvoice
     # @param message [String]
     # @param http_status [Integer, nil]
     # @param retryable [Boolean]
-    def initialize(message, http_status: nil, retryable: true)
+    # @param request_sent [Boolean] false only if the connection failed before anything was sent
+    def initialize(message, http_status: nil, retryable: true, request_sent: true)
       @http_status = http_status
       @retryable = retryable
+      @request_sent = request_sent
       super(message)
     end
 
     def retryable?
       @retryable
     end
+
+    # Whether the request may have reached NAV. False only if the connection failed before anything was sent.
+    def request_sent?
+      @request_sent
+    end
   end
+
+  # A submission was sent, but no answer arrived, so it is unknown whether NAV received it.
+  #
+  # Do not send it again blindly: the invoices may already be at NAV. Wait five minutes, then look for the
+  # transaction with {Transactions#reconcile} or {Transactions#list} over {#reconcile_window} (spec 1.9.2).
+  # Deliberately not a {TransportError}, so a generic retry of transport errors cannot send invoices twice.
+  class UnknownOutcomeError < Error
+    # @return [String] e.g. "manageInvoice"
+    attr_reader :operation
+
+    # @return [String]
+    attr_reader :request_id
+
+    # @return [Time] the timestamp in the request header
+    attr_reader :sent_at
+
+    # @return [Integer] the number of invoices or annulments in the request
+    attr_reader :item_count
+
+    # @param operation [String]
+    # @param request_id [String]
+    # @param sent_at [Time]
+    # @param item_count [Integer]
+    def initialize(operation:, request_id:, sent_at:, item_count:)
+      @operation = operation
+      @request_id = request_id
+      @sent_at = sent_at
+      @item_count = item_count
+      super("NAV #{operation} request_id=#{request_id} got no answer; it may have arrived. Do not resend it: " \
+            "after five minutes, look for the transaction (spec 1.9.2)")
+    end
+
+    # The time range to search with {Transactions#list}: from a minute before sending to ten minutes after.
+    #
+    # @return [Range<Time>]
+    def reconcile_window
+      (sent_at - 60)..(sent_at + 600)
+    end
+  end
+
+  # A submission would exceed NAV's size limits, so it was not sent.
+  class SubmissionTooLargeError < Error; end
 
   # NAV sent data that could not be decoded: invoice data that is not valid base64, gzip or UTF-8, or an
   # exchange token that does not decrypt with the exchange key.
@@ -134,6 +183,14 @@ module NavOnlineInvoice
     end
   end
 
+  # The exchange token was rejected or expired before the request was sent. Nothing was stored at NAV;
+  # submitting again, which requests a new token, is safe.
+  class ExchangeTokenError < RequestError
+    def retryable?
+      true
+    end
+  end
+
   # A temporary NAV failure. Sending the request again with a new request ID can succeed.
   class TemporaryError < ApiError
     def retryable?
@@ -153,9 +210,10 @@ module NavOnlineInvoice
       ],
       RequestError => %w[
         INVALID_REQUEST INVALID_REQUEST_VERSION INVALID_HEADER_VERSION REQUEST_VERSION_NOT_ALLOWED
-        INVALID_TIMESTAMP INDEX_NOT_SEQUENTIAL INVALID_EXCHANGE_TOKEN MULTIPLE_QUERY_RESULT_FOUND
+        INVALID_TIMESTAMP INDEX_NOT_SEQUENTIAL MULTIPLE_QUERY_RESULT_FOUND
         STATUS_QUERY_NOT_ALLOWED
       ],
+      ExchangeTokenError => %w[INVALID_EXCHANGE_TOKEN],
       MaintenanceError => %w[MAINTENANCE_MODE],
       TemporaryError => %w[OPERATION_FAILED REQUEST_ID_NOT_UNIQUE]
     }.flat_map { |klass, codes| codes.map { |code| [code, klass] } }.to_h.freeze

@@ -31,6 +31,15 @@ module NavOnlineInvoice
       # False unless a subclass says otherwise, because an operation that changes data must never be sent twice.
       def auto_retry? = false
 
+      # Whether the operation submits data. A submission without an answer raises {UnknownOutcomeError}.
+      def submission? = false
+
+      # The largest request NAV accepts for this operation, in bytes, or nil for no limit.
+      def max_body_bytes = nil
+
+      # Runs right before the request is sent, after the throttle; raises to stop it.
+      def check_before_send!; end
+
       # The hashes of the submitted items that are part of the request signature, in index order (spec 1.5.1).
       #
       # @return [Array<String>] empty for every operation but manageInvoice and manageAnnulment
