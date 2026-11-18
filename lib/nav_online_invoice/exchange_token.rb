@@ -34,7 +34,8 @@ module NavOnlineInvoice
 
     # Leaves out the token.
     def inspect
-      "#<data #{self.class.name} value=[FILTERED], valid_from=#{valid_from.inspect}, valid_to=#{valid_to.inspect}>"
+      "#<data #{self.class.name} value=#{Redactor::FILTERED}, valid_from=#{valid_from.inspect}, " \
+        "valid_to=#{valid_to.inspect}>"
     end
   end
 end

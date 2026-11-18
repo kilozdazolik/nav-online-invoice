@@ -16,11 +16,7 @@ module NavOnlineInvoice
     # @return [Array<Operations::Manage::Item>]
     # @raise [ArgumentError, SchemaValidationError]
     def prepare(items, time:, validate:)
-      unless items.is_a?(Array) && items.all?(Hash) && items.size.between?(1, Operations::Manage::MAX_ITEMS)
-        raise ArgumentError, "items must be an Array of 1-#{Operations::Manage::MAX_ITEMS} Hashes"
-      end
-
-      items.map.with_index(1) do |item, index|
+      ItemList.check(items).map.with_index(1) do |item, index|
         xml = xml(item, "items[#{index}]", time)
         SchemaValidator.validate!(xml, schema: :annulment) if validate
         Operations::Manage::Item.new(operation: "ANNUL", data: Payload.encode(xml, compressed: false))
@@ -39,21 +35,14 @@ module NavOnlineInvoice
 
     # @return [Hash{Symbol => String}] the elements in schema order
     def values(item, name, time)
-      unknown = item.keys - KEYS
-      raise ArgumentError, "#{name} has unknown keys: #{unknown.inspect}" unless unknown.empty?
+      ItemList.known_keys!(name, item, KEYS)
 
       {
         annulmentReference: Params.text(:"#{name}[:reference]", item[:reference], max: 50),
-        annulmentTimestamp: Params.timestamp(timestamp(item[:timestamp] || time, name)),
+        annulmentTimestamp: Params.timestamp(Params.time(:"#{name}[:timestamp]", item[:timestamp] || time)),
         annulmentCode: Params.enum(:"#{name}[:code]", item[:code], CODES),
         annulmentReason: Params.text(:"#{name}[:reason]", item[:reason], max: 1024)
       }
-    end
-
-    def timestamp(value, name)
-      return value if value.respond_to?(:getutc) && !value.is_a?(Date)
-
-      raise ArgumentError, "#{name}[:timestamp] must be a Time, got #{value.inspect}"
     end
   end
 end

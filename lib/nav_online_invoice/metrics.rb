@@ -27,8 +27,7 @@ module NavOnlineInvoice
                    logger: nil)
       raise ArgumentError, "environment must be :test or :production" unless ENDPOINTS.key?(environment)
       unless max_retries.is_a?(Integer) && max_retries >= 0
-        raise ArgumentError,
-              "max_retries must be an Integer of 0 or more"
+        raise ArgumentError, "max_retries must be an Integer of 0 or more"
       end
       unless retry_base_delay.is_a?(Numeric) && !retry_base_delay.negative?
         raise ArgumentError, "retry_base_delay must be a number of 0 or more"

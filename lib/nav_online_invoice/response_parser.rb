@@ -69,9 +69,9 @@ module NavOnlineInvoice
       def api_error(result, response, request_id, root = nil)
         code = text(result, "common:errorCode")
         ApiError.for(code).new(
-          code: code,
+          code:,
           nav_message: text(result, "common:message"),
-          request_id: request_id,
+          request_id:,
           http_status: response.status,
           technical_validation_messages: root ? technical_validation_messages(root) : []
         )

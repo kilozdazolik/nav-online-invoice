@@ -7,7 +7,7 @@ RSpec.shared_context "with NAV credentials" do
   let(:client) do
     NavOnlineInvoice::Client.new(
       NavOnlineInvoice::Configuration.new(
-        environment: environment,
+        environment:,
         login: env.fetch("NAV_LOGIN"),
         password: env.fetch("NAV_PASSWORD"),
         signature_key: env.fetch("NAV_SIGNATURE_KEY"),

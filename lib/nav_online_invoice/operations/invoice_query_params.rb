@@ -29,9 +29,8 @@ module NavOnlineInvoice
       }.freeze
 
       TRANSACTION = %i[transaction_id index operation].freeze
-      OPERATIONS = %w[CREATE MODIFY STORNO].freeze
       FILTERS = (MANDATORY + ADDITIONAL.keys + RELATIONAL.keys + TRANSACTION).freeze
-      private_constant :MANDATORY, :ADDITIONAL, :RELATIONAL, :TRANSACTION, :OPERATIONS
+      private_constant :MANDATORY, :ADDITIONAL, :RELATIONAL, :TRANSACTION
 
       # @param filters [Hash] see {Invoices#digest}
       # @raise [ArgumentError]
@@ -110,7 +109,7 @@ module NavOnlineInvoice
         entries = [["transactionId", Params.transaction_id(filters[:transaction_id])]]
         entries << ["index", Params.index(:index, filters[:index])] if filters.key?(:index)
         if filters.key?(:operation)
-          entries << ["invoiceOperation", Params.enum(:operation, filters[:operation], OPERATIONS)]
+          entries << ["invoiceOperation", Params.enum(:operation, filters[:operation], Params::INVOICE_OPERATIONS)]
         end
         entries
       end

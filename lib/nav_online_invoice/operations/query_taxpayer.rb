@@ -30,11 +30,11 @@ module NavOnlineInvoice
       def parse(document, request_id:, raw_xml:)
         root = document.root
         TaxpayerResult.new(
-          request_id: request_id,
+          request_id:,
           info_date: time(root, "api:infoDate"),
           validity: boolean(root, "api:taxpayerValidity"),
           taxpayer: root.at_xpath("api:taxpayerData", NAMESPACES)&.then { |node| taxpayer(node) },
-          raw_xml: raw_xml
+          raw_xml:
         )
       end
 
@@ -50,7 +50,9 @@ module NavOnlineInvoice
           county_code: text(detail, "base:countyCode"),
           incorporation: symbol(node, "api:incorporation"),
           vat_group_membership: text(node, "api:vatGroupMembership"),
-          addresses: node.xpath("api:taxpayerAddressList/api:taxpayerAddressItem", NAMESPACES).map { address(_1) }
+          addresses: node.xpath("api:taxpayerAddressList/api:taxpayerAddressItem", NAMESPACES).map do |item|
+            address(item)
+          end
         )
       end
 

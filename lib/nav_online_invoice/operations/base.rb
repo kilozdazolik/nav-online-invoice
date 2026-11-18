@@ -61,6 +61,18 @@ module NavOnlineInvoice
       # Shows only the operation, never its parameters, tokens or keys.
       def inspect = "#<#{self.class.name}>"
 
+      # Builds a {Page} from the paging elements of an answer and the items read by the block.
+      #
+      # @param result [Nokogiri::XML::Node] the element with currentPage and availablePage
+      # @param item_xpath [String] the items, relative to `result`
+      # @yieldparam node [Nokogiri::XML::Node] one item
+      # @return [Page]
+      def page(result, item_xpath, request_id:, raw_xml:, &)
+        Page.new(request_id:, current_page: integer(result, "api:currentPage"),
+                 total_pages: integer(result, "api:availablePage"),
+                 items: result.xpath(item_xpath, NAMESPACES).map(&), raw_xml:)
+      end
+
       # Reads a successful answer.
       #
       # @param document [Nokogiri::XML::Document]

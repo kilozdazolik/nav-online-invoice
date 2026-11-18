@@ -33,13 +33,7 @@ module NavOnlineInvoice
       # @return [Page<Transaction>]
       def parse(document, request_id:, raw_xml:)
         result = document.root.at_xpath("api:transactionListResult", NAMESPACES)
-        Page.new(
-          request_id: request_id,
-          current_page: integer(result, "api:currentPage"),
-          total_pages: integer(result, "api:availablePage"),
-          items: result.xpath("api:transaction", NAMESPACES).map { |node| transaction(node) },
-          raw_xml: raw_xml
-        )
+        page(result, "api:transaction", request_id:, raw_xml:) { |node| transaction(node) }
       end
 
       private

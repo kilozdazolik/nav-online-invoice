@@ -3,6 +3,9 @@
 module NavOnlineInvoice
   # Hashes and signatures required by the NAV API.
   module Crypto
+    UNDECRYPTABLE_TOKEN = "the exchange token could not be decrypted; check exchange_key"
+    private_constant :UNDECRYPTABLE_TOKEN
+
     module_function
 
     # Returns the passwordHash value: the SHA-512 of the password, as uppercase hex.
@@ -59,9 +62,9 @@ module NavOnlineInvoice
       # A wrong key passes the padding check now and then, so the result is checked as well.
       return token if token.valid_encoding? && token.match?(/\A[[:graph:]]{1,50}\z/)
 
-      raise DecodeError, "the exchange token could not be decrypted; check exchange_key"
+      raise DecodeError, UNDECRYPTABLE_TOKEN
     rescue OpenSSL::Cipher::CipherError, ArgumentError
-      raise DecodeError, "the exchange token could not be decrypted; check exchange_key"
+      raise DecodeError, UNDECRYPTABLE_TOKEN
     end
 
     def sha3(value)

@@ -5,7 +5,6 @@ module NavOnlineInvoice
   #
   # @api private
   module SubmissionItems
-    OPERATIONS = %w[CREATE MODIFY STORNO].freeze
     KEYS = %i[operation xml electronic_invoice_hash].freeze
     # The largest invoice NAV accepts, uncompressed (spec 1.6.5).
     MAX_INVOICE_BYTES = 15_000_000
@@ -25,23 +24,18 @@ module NavOnlineInvoice
     # @return [Array(Array<Operations::Manage::Item>, Boolean)] the items and whether they are compressed
     # @raise [ArgumentError, SchemaValidationError, SubmissionTooLargeError]
     def prepare(items, compress:, validate:)
-      unless items.is_a?(Array) && items.all?(Hash) && items.size.between?(1, Operations::Manage::MAX_ITEMS)
-        raise ArgumentError, "items must be an Array of 1-#{Operations::Manage::MAX_ITEMS} Hashes"
-      end
-
-      invoices = items.map.with_index(1) { |item, index| invoice(item, "items[#{index}]", validate) }
+      invoices = ItemList.check(items).map.with_index(1) { |item, index| invoice(item, "items[#{index}]", validate) }
       compressed = compress?(invoices, compress)
       [invoices.map { |invoice| encode(invoice, compressed) }, compressed]
     end
 
     def invoice(item, name, validate)
-      unknown = item.keys - KEYS
-      raise ArgumentError, "#{name} has unknown keys: #{unknown.inspect}" unless unknown.empty?
+      ItemList.known_keys!(name, item, KEYS)
 
       xml = xml(item[:xml], name)
       SchemaValidator.validate!(xml, schema: :data) if validate
       complete = complete?(xml)
-      Invoice.new(operation: Params.enum(:"#{name}[:operation]", item[:operation], OPERATIONS), xml:,
+      Invoice.new(operation: Params.enum(:"#{name}[:operation]", item[:operation], Params::INVOICE_OPERATIONS), xml:,
                   electronic_invoice_hash: electronic_invoice_hash(item[:electronic_invoice_hash], name, complete),
                   complete:)
     end

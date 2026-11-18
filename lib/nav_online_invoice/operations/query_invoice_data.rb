@@ -17,12 +17,12 @@ module NavOnlineInvoice
         compressed = boolean(result, "api:compressedContentIndicator")
         hash = result.at_xpath("api:electronicInvoiceHash", NAMESPACES)
         InvoiceDataResult.new(
-          request_id: request_id,
-          invoice_xml: Payload.decode(text(result, "api:invoiceData"), compressed: compressed),
-          compressed: compressed,
+          request_id:,
+          invoice_xml: Payload.decode(text(result, "api:invoiceData"), compressed:),
+          compressed:,
           audit_data: audit_data(result.at_xpath("api:auditData", NAMESPACES)),
           electronic_invoice_hash: hash && ElectronicInvoiceHash.new(value: hash.text, crypto_type: hash["cryptoType"]),
-          raw_xml: raw_xml
+          raw_xml:
         )
       end
 

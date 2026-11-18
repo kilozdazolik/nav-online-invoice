@@ -46,13 +46,7 @@ module NavOnlineInvoice
       # @return [Page<InvoiceDigest>]
       def parse(document, request_id:, raw_xml:)
         result = document.root.at_xpath("api:invoiceDigestResult", NAMESPACES)
-        Page.new(
-          request_id: request_id,
-          current_page: integer(result, "api:currentPage"),
-          total_pages: integer(result, "api:availablePage"),
-          items: result.xpath("api:invoiceDigest", NAMESPACES).map { |node| digest(node) },
-          raw_xml: raw_xml
-        )
+        page(result, "api:invoiceDigest", request_id:, raw_xml:) { |node| digest(node) }
       end
 
       private

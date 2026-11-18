@@ -29,7 +29,7 @@ module NavOnlineInvoice
     # Hides the technical user's login.
     def inspect
       "#<data #{self.class.name} transaction_id=#{transaction_id.inspect}, ins_date=#{ins_date.inspect}, " \
-        "ins_cus_user=[FILTERED], status=#{status.inspect}, item_count=#{item_count.inspect}>"
+        "ins_cus_user=#{Redactor::FILTERED}, status=#{status.inspect}, item_count=#{item_count.inspect}>"
     end
   end
 end

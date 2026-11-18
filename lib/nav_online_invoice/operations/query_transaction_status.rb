@@ -31,13 +31,13 @@ module NavOnlineInvoice
         return unless list
 
         TransactionStatus.new(
-          request_id: request_id,
+          request_id:,
           results: list.xpath("api:processingResult", NAMESPACES).map { |node| result(node) },
           original_request_version: text(list, "api:originalRequestVersion"),
           annulment_verification_status: symbol(list, "api:annulmentData/api:annulmentVerificationStatus"),
           annulment_decision_date: time(list, "api:annulmentData/api:annulmentDecisionDate"),
           annulment_decision_user: text(list, "api:annulmentData/api:annulmentDecisionUser"),
-          raw_xml: raw_xml
+          raw_xml:
         )
       end
 
@@ -54,8 +54,8 @@ module NavOnlineInvoice
           business_validation_messages: node.xpath("api:businessValidationMessages", NAMESPACES).map do |message|
             business_message(message)
           end,
-          compressed: compressed,
-          original_request: original && Payload.decode(original, compressed: compressed)
+          compressed:,
+          original_request: original && Payload.decode(original, compressed:)
         )
       end
 

@@ -132,9 +132,15 @@ module NavOnlineInvoice
       results.filter_map do |result|
         next if result.aborted? || result.original_request.nil?
 
-        Nokogiri::XML(result.original_request)
-                .at_xpath("/*/*[local-name()='invoiceNumber' or local-name()='annulmentReference']")&.text
+        submitted_number(result.original_request)
       end
+    end
+
+    def submitted_number(original_request)
+      Nokogiri::XML(original_request) { |config| config.strict.nonet }
+              .at_xpath("/*/*[local-name()='invoiceNumber' or local-name()='annulmentReference']")&.text
+    rescue Nokogiri::XML::SyntaxError
+      nil
     end
 
     def check_wait(timeout, interval)

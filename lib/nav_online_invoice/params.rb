@@ -14,6 +14,9 @@ module NavOnlineInvoice
     MAX_DAYS = 35
     MAX_HOURS = 840
 
+    # What a submitted invoice does: the same values in submissions and in invoice queries.
+    INVOICE_OPERATIONS = %w[CREATE MODIFY STORNO].freeze
+
     def direction(value)
       enum(:direction, value, %w[INBOUND OUTBOUND])
     end
@@ -143,6 +146,13 @@ module NavOnlineInvoice
 
     def date?(value)
       value.is_a?(Date) && !value.is_a?(DateTime)
+    end
+
+    # @return [Time]
+    def time(name, value)
+      return value if time?(value)
+
+      raise ArgumentError, "#{name} must be a Time, got #{value.inspect}"
     end
 
     def time?(value)

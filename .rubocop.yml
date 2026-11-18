@@ -42,3 +42,7 @@ RSpec/MultipleMemoizedHelpers:
 
 Metrics/ClassLength:
   CountAsOne: [array, hash, heredoc, method_call]
+
+# `request_id:` instead of `request_id: request_id`, everywhere.
+Style/HashSyntax:
+  EnforcedShorthandSyntax: always
