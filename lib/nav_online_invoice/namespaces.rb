@@ -8,6 +8,7 @@ module NavOnlineInvoice
     "api" => "http://schemas.nav.gov.hu/OSA/3.0/api",
     "common" => "http://schemas.nav.gov.hu/NTCA/1.0/common",
     "base" => "http://schemas.nav.gov.hu/OSA/3.0/base",
-    "annul" => "http://schemas.nav.gov.hu/OSA/3.0/annul"
+    "annul" => "http://schemas.nav.gov.hu/OSA/3.0/annul",
+    "metrics" => "http://schemas.nav.gov.hu/OSA/3.0/metrics"
   }.freeze
 end

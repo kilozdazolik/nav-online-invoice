@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented data in the shape of a NAV metrics response. -->
+<QueryServiceMetricsListResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/metrics">
+  <metricDefinition>
+    <metricName>responseTimeAverageMsManageInvoice</metricName>
+    <metricType>GAUGE</metricType>
+    <metricDescription>
+      <language>HU</language>
+      <localizedDescription>Az XML API azonos nevű végpontjának válaszidejei milliszekundumban</localizedDescription>
+    </metricDescription>
+    <metricDescription>
+      <language>EN</language>
+      <localizedDescription>Response times of the XML API endpoint of the same name in milliseconds</localizedDescription>
+    </metricDescription>
+    <metricDescription>
+      <language>DE</language>
+      <localizedDescription>Antwortzeiten des gleichnamigen XML-API-Endpunkts in Millisekunden</localizedDescription>
+    </metricDescription>
+  </metricDefinition>
+  <metricDefinition>
+    <metricName>processingTimeAverageMsInvoice</metricName>
+    <metricType>GAUGE</metricType>
+    <metricDescription>
+      <language>HU</language>
+      <localizedDescription>Átlagos számla feldolgozási idő milliszekundumban</localizedDescription>
+    </metricDescription>
+    <metricDescription>
+      <language>EN</language>
+      <localizedDescription>Average invoice processing time in milliseconds</localizedDescription>
+    </metricDescription>
+    <metricDescription>
+      <language>DE</language>
+      <localizedDescription>Durchschnittliche Verarbeitungszeit einer Rechnung in Millisekunden</localizedDescription>
+    </metricDescription>
+  </metricDefinition>
+</QueryServiceMetricsListResponse>

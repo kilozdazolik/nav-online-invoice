@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented data in the shape of a NAV metrics response. -->
+<QueryServiceMetricsResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/metrics" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common">
+  <result>
+    <ns2:funcCode>ERROR</ns2:funcCode>
+    <ns2:errorCode>OPERATION_FAILED</ns2:errorCode>
+    <ns2:message>Váratlan hiba történt.</ns2:message>
+  </result>
+</QueryServiceMetricsResponse>

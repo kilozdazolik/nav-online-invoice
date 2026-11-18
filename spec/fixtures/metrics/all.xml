@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented data in the shape of a NAV metrics response. -->
+<QueryServiceMetricsResponse xmlns="http://schemas.nav.gov.hu/OSA/3.0/metrics" xmlns:ns2="http://schemas.nav.gov.hu/NTCA/1.0/common">
+  <result>
+    <ns2:funcCode>OK</ns2:funcCode>
+  </result>
+  <metricsLastUpdateTime>2026-11-18T10:01:00.000Z</metricsLastUpdateTime>
+  <metric>
+    <metricDefinition>
+      <metricName>responseTimeAverageMsManageInvoice</metricName>
+      <metricType>GAUGE</metricType>
+      <metricDescription>
+        <language>HU</language>
+        <localizedDescription>Az XML API azonos nevű végpontjának válaszidejei milliszekundumban</localizedDescription>
+      </metricDescription>
+      <metricDescription>
+        <language>EN</language>
+        <localizedDescription>Response times of the XML API endpoint of the same name in milliseconds</localizedDescription>
+      </metricDescription>
+      <metricDescription>
+        <language>DE</language>
+        <localizedDescription>Antwortzeiten des gleichnamigen XML-API-Endpunkts in Millisekunden</localizedDescription>
+      </metricDescription>
+    </metricDefinition>
+    <metricValues>
+      <value>412.5</value>
+      <timestamp>2026-11-18T10:00:00.000Z</timestamp>
+    </metricValues>
+    <metricValues>
+      <value>388</value>
+      <timestamp>2026-11-18T10:01:00.000Z</timestamp>
+    </metricValues>
+  </metric>
+  <metric>
+    <metricDefinition>
+      <metricName>processingTimeAverageMsInvoice</metricName>
+      <metricType>GAUGE</metricType>
+      <metricDescription>
+        <language>HU</language>
+        <localizedDescription>Átlagos számla feldolgozási idő milliszekundumban</localizedDescription>
+      </metricDescription>
+      <metricDescription>
+        <language>EN</language>
+        <localizedDescription>Average invoice processing time in milliseconds</localizedDescription>
+      </metricDescription>
+      <metricDescription>
+        <language>DE</language>
+        <localizedDescription>Durchschnittliche Verarbeitungszeit einer Rechnung in Millisekunden</localizedDescription>
+      </metricDescription>
+    </metricDefinition>
+  </metric>
+</QueryServiceMetricsResponse>

@@ -40,6 +40,15 @@ module NavOnlineInvoice
       @transactions = Transactions.new(self)
     end
 
+    # NAV's service metrics, in this client's environment.
+    #
+    # @return [Metrics]
+    def metrics
+      @metrics ||= Metrics.new(environment: config.environment, open_timeout: config.open_timeout,
+                               read_timeout: config.read_timeout, max_retries: config.max_retries,
+                               retry_base_delay: config.retry_base_delay, logger: config.logger)
+    end
+
     # Returns a client that works with the data of a predecessor company (spec 1.10).
     #
     # Its queries search the predecessor's invoices and submissions, and its annulments annul the predecessor's

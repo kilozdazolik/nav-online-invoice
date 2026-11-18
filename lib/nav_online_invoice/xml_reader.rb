@@ -3,7 +3,7 @@
 module NavOnlineInvoice
   # Typed readers for NAV's response XML.
   #
-  # Every reader takes a node and an XPath with the api/common/base prefixes, and returns nil when the node or
+  # Every reader takes a node and an XPath with the prefixes of NAMESPACES, and returns nil when the node or
   # the element is missing or its value cannot be read.
   #
   # @api private
