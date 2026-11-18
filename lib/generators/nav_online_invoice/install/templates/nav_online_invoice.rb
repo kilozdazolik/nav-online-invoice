@@ -1,0 +1,38 @@
+# frozen_string_literal: true
+
+# Settings of the NAV technical user. Keep the secrets in the credentials (bin/rails credentials:edit):
+#
+#   nav:
+#     login: ...
+#     password: ...
+#     signature_key: ...
+#     exchange_key: ...   # only needed to submit invoices
+#     tax_number: "12345678"
+#
+# The test and the production environment need separate technical users.
+nav = Rails.application.credentials.nav || {}
+
+NavOnlineInvoice.configure do |config|
+  config.environment = Rails.env.production? ? :production : :test
+  config.login = nav[:login]
+  config.password = nav[:password]
+  config.signature_key = nav[:signature_key]
+  config.exchange_key = nav[:exchange_key]
+  config.tax_number = nav[:tax_number]
+  config.software = {
+    id: "HU12345678ABCDE-01",       # 18 characters of 0-9, A-Z and -: country code, tax number, suffix
+    name: "My invoicing app",
+    operation: :online_service,     # or :local_software
+    main_version: "1.0",
+    dev_name: "Example Ltd.",
+    dev_contact: "dev@example.com"  # a working e-mail address
+  }
+end
+
+# Then: NavOnlineInvoice.client.taxpayers.query("12345678")
+#
+# For several companies, skip NavOnlineInvoice.configure and build one client per company instead:
+#
+#   NAV_CLIENTS = Rails.application.credentials.nav_companies.to_h do |company, settings|
+#     [company, NavOnlineInvoice::Client.new(NavOnlineInvoice::Configuration.new(**settings, software: ...))]
+#   end
