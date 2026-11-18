@@ -81,10 +81,12 @@ RSpec.describe NavOnlineInvoice::Operations::ManageInvoice do
                                          max_body_bytes: 10_000_000)
   end
 
-  it "does not show the token or the invoices" do
+  it "does not show the token or the invoices, not even in pp, to_h or to_s" do
     operation = described_class.new(token:, items: [item], compressed: false)
 
-    expect(operation.inspect).not_to include("SPEC-TOKEN", invoice[0, 20])
-    expect(item.inspect).not_to include(invoice[0, 20])
+    [operation.inspect, PP.pp(operation, +""), operation.to_s].each do |output|
+      expect(output).not_to include("SPEC-TOKEN", invoice[0, 20])
+    end
+    [item.inspect, PP.pp(item, +""), item.to_h.to_s].each { |output| expect(output).not_to include(invoice[0, 20]) }
   end
 end

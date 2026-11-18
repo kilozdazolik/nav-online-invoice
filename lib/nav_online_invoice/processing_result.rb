@@ -17,6 +17,8 @@ module NavOnlineInvoice
   # @!attribute original_request
   #   @return [String, nil] the submitted invoice XML, decoded; only if it was asked for
   class ProcessingResult
+    include Redacted
+
     def initialize(index:, batch_index:, status:, technical_validation_messages:, business_validation_messages:,
                    compressed:, original_request:)
       super(index:, batch_index:, status:, compressed:, original_request:,
@@ -53,12 +55,6 @@ module NavOnlineInvoice
       "#<data #{self.class.name} index=#{index}, status=#{status.inspect}, " \
         "technical_validation_messages=#{technical_validation_messages.size}, " \
         "business_validation_messages=#{business_validation_messages.size}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

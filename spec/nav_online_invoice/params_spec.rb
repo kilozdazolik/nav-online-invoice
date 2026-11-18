@@ -78,6 +78,13 @@ RSpec.describe NavOnlineInvoice::Params do
     expect { described_class.index(:index, 101) }.to raise_error(ArgumentError, /1 to 100/)
   end
 
+  it "leaves free text and tax numbers out of the error message" do
+    expect { described_class.text(:name, "Kovács", min: 7, max: 9) }
+      .to raise_error(ArgumentError) { |error| expect(error.message).not_to include("Kovács") }
+    expect { described_class.tax_number(:tax_number, "1234567") }
+      .to raise_error(ArgumentError) { |error| expect(error.message).not_to include("1234567") }
+  end
+
   it "validates transaction IDs, tax numbers and texts" do
     expect { described_class.transaction_id("bad id") }.to raise_error(ArgumentError, /transaction_id/)
     expect { described_class.tax_number(:tax_number, "123") }.to raise_error(ArgumentError, /tax_number/)

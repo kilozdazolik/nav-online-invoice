@@ -18,6 +18,8 @@ module NavOnlineInvoice
   # @!attribute reference
   #   @return [InvoiceReference, nil] for modifications and storno invoices
   class InvoiceChainElement
+    include Redacted
+
     def initialize(new_created_lines:, **)
       super(new_created_lines: new_created_lines.dup.freeze, **)
     end
@@ -26,12 +28,6 @@ module NavOnlineInvoice
     def inspect
       "#<data #{self.class.name} invoice_number=#{invoice_number.inspect}, operation=#{operation.inspect}, " \
         "ins_date=#{ins_date.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

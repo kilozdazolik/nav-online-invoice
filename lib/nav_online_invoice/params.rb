@@ -49,17 +49,18 @@ module NavOnlineInvoice
       raise ArgumentError, "transaction_id must be 1-30 characters of letters, digits, + and _, got #{value.inspect}"
     end
 
+    # The messages of this and {text} leave out the value, which can be personal data.
     def tax_number(name, value)
       TaxNumber.normalize(value)
     rescue ArgumentError
-      raise ArgumentError, "#{name} must be a tax number with 8 or 11 digits, got #{value.inspect}"
+      raise ArgumentError, "#{name} must be a tax number with 8 or 11 digits"
     end
 
     def text(name, value, max:, min: 1)
       string = value.to_s
       return string if !string.strip.empty? && string.length.between?(min, max)
 
-      raise ArgumentError, "#{name} must be #{min}-#{max} characters, got #{value.inspect}"
+      raise ArgumentError, "#{name} must be #{min}-#{max} characters, not blank; got #{string.length}"
     end
 
     # @param range [Range<Date>] inclusive or exclusive

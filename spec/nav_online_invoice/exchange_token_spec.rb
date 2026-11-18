@@ -28,5 +28,7 @@ RSpec.describe NavOnlineInvoice::ExchangeToken do
   it "hides the token in inspect and pp" do
     expect(token.inspect).not_to include("SECRET-TOKEN")
     expect(PP.pp(token, +"")).not_to include("SECRET-TOKEN")
+    expect(token.to_h).to include(value: "[FILTERED]")
+    expect(token.value).to eq("SECRET-TOKEN")
   end
 end

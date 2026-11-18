@@ -10,6 +10,9 @@ module NavOnlineInvoice
   #   config.nav_online_invoice.environment = :production
   #   config.nav_online_invoice.login = Rails.application.credentials.dig(:nav, :login)
   class Railtie < ::Rails::Railtie
+    SECRETS = %i[login password password_hash signature_key exchange_key].freeze
+    private_constant :SECRETS
+
     config.nav_online_invoice = ActiveSupport::OrderedOptions.new
 
     initializer "nav_online_invoice.logger", after: :initialize_logger do
@@ -32,9 +35,18 @@ module NavOnlineInvoice
       unknown = options.keys.map(&:to_sym) - Configuration::Builder::ATTRIBUTES
       raise ConfigurationError, "unknown config.nav_online_invoice settings: #{unknown.inspect}" unless unknown.empty?
 
-      NavOnlineInvoice.configure do |config|
+      configuration = NavOnlineInvoice.configure do |config|
         options.each { |name, value| config.public_send(:"#{name}=", value) }
       end
+      hide_secrets(options)
+      configuration
     end
+
+    # The configuration keeps only the password hash and hides the keys; the Rails config would otherwise keep
+    # them in plain text for anyone who inspects it.
+    def self.hide_secrets(options)
+      SECRETS.each { |name| options[name] = Redactor::FILTERED if options.key?(name) }
+    end
+    private_class_method :hide_secrets
   end
 end

@@ -11,6 +11,7 @@ module NavOnlineInvoice
     # bad argument fails before any request is built.
     class Base
       include XmlReader
+      include Redacted
 
       # The NAV operation name, which is also the last part of its URL, e.g. "queryTaxpayer".
       def name
@@ -56,6 +57,9 @@ module NavOnlineInvoice
       def build_body(xml)
         raise NotImplementedError, "#{self.class} must define build_body"
       end
+
+      # Shows only the operation, never its parameters, tokens or keys.
+      def inspect = "#<#{self.class.name}>"
 
       # Reads a successful answer.
       #

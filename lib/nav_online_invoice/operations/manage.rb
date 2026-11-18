@@ -20,13 +20,17 @@ module NavOnlineInvoice
       # @!attribute electronic_invoice_hash
       #   @return [Hash, nil] +{ value:, crypto_type: }+; invoices only
       Item = Data.define(:operation, :data, :electronic_invoice_hash) do
+        include Redacted
+
         def initialize(operation:, data:, electronic_invoice_hash: nil)
           super
         end
 
         # Leaves out the data.
         def inspect = "#<data #{self.class.name} operation=#{operation.inspect}, data=[#{data.bytesize} bytes]>"
-        alias_method :to_s, :inspect
+
+        # Leaves out the data, which `to_json` and `as_json` would otherwise include.
+        def to_h(&) = super.merge(data: "[FILTERED #{data.bytesize} bytes]").to_h(&)
       end
 
       # @param token [ExchangeToken]

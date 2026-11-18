@@ -21,16 +21,12 @@ module NavOnlineInvoice
   # @!attribute item_count
   #   @return [Integer] number of invoices or annulments in it
   class Transaction
+    include Redacted
+
     # Hides the technical user's login.
     def inspect
       "#<data #{self.class.name} transaction_id=#{transaction_id.inspect}, ins_date=#{ins_date.inspect}, " \
         "ins_cus_user=[FILTERED], status=#{status.inspect}, item_count=#{item_count.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

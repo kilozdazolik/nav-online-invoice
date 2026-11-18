@@ -15,16 +15,12 @@ module NavOnlineInvoice
   # @!attribute original_request_version
   #   @return [String] the format of the invoice, e.g. "3.0"
   class AuditData
+    include Redacted
+
     # Hides the technical user's login.
     def inspect
       "#<data #{self.class.name} ins_date=#{ins_date.inspect}, ins_cus_user=[FILTERED], source=#{source.inspect}, " \
         "transaction_id=#{transaction_id.inspect}, original_request_version=#{original_request_version.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

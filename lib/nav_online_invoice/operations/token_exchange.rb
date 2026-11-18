@@ -28,9 +28,6 @@ module NavOnlineInvoice
           received_at: Monotonic.now
         )
       end
-
-      # Leaves out the exchange key.
-      def inspect = "#<#{self.class.name}>"
     end
   end
 end

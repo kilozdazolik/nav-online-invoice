@@ -21,15 +21,24 @@ module NavOnlineInvoice
   # The configuration is missing a value or a value has the wrong format.
   class ConfigurationError < Error; end
 
-  # The outgoing request does not match NAV's XML schema, so it was not sent.
+  # A request or an invoice does not match NAV's XML schema, so nothing was sent.
+  #
+  # The message leaves out the values the schema rejected, since they can be names, addresses or amounts.
   class SchemaValidationError < Error
-    # @return [Array<String>] the schema validation messages
+    # A value libxml2 quotes in a message: "The value 'Main St 1' is not accepted ..." or
+    # "Element 'x': 'abc' is not a valid value ...".
+    QUOTED_VALUE = /(?<=value |: )'(?:[^']|'(?! is ))*'(?= is )/
+    private_constant :QUOTED_VALUE
+
+    # @return [Array<String>] the full schema validation messages; they can contain personal data, so do not log
+    #   them in production
     attr_reader :errors
 
     # @param errors [Array<String>] the schema validation messages
     def initialize(errors)
       @errors = errors
-      super("Request does not match the NAV schema: #{errors.first(3).join("; ")}")
+      shown = errors.first(3).map { |error| error.gsub(QUOTED_VALUE, Redactor::FILTERED) }
+      super("XML does not match the NAV schema: #{shown.join("; ")}")
     end
   end
 

@@ -11,6 +11,7 @@ require "uri"
 require "zlib"
 
 require_relative "nav_online_invoice/version"
+require_relative "nav_online_invoice/redacted"
 require_relative "nav_online_invoice/errors"
 require_relative "nav_online_invoice/namespaces"
 require_relative "nav_online_invoice/xml_reader"

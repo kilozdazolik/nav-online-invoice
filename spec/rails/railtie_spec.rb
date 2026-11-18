@@ -51,6 +51,13 @@ if defined?(Rails::Railtie)
                                                                 logger: Rails.logger)
     end
 
+    it "hides the secrets in config.nav_online_invoice once it is applied" do
+      options = RailtieSpec::Application.config.nav_online_invoice
+
+      expect(options.values_at(:login, :password, :signature_key, :exchange_key)).to all(eq("[FILTERED]"))
+      expect(options[:tax_number]).to eq("12345678")
+    end
+
     describe ".configure" do
       after { NavOnlineInvoice.reset! }
 

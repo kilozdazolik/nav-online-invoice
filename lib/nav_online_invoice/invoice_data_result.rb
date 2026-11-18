@@ -13,6 +13,8 @@ module NavOnlineInvoice
   # @!attribute electronic_invoice_hash
   #   @return [String, nil] for electronic invoices
   class InvoiceDataResult
+    include Redacted
+
     # Parses {#invoice_xml}. Parsed again on each call; keep the result if you need it more than once.
     #
     # @return [Nokogiri::XML::Document]
@@ -24,12 +26,6 @@ module NavOnlineInvoice
     def inspect
       "#<data #{self.class.name} request_id=#{request_id.inspect}, compressed=#{compressed.inspect}, " \
         "audit_data=#{audit_data.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

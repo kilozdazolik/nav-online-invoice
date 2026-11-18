@@ -15,6 +15,8 @@ module NavOnlineInvoice
   # @!attribute addresses
   #   @return [Array<Address>]
   class Taxpayer
+    include Redacted
+
     def initialize(name:, taxpayer_id:, incorporation:, short_name: nil, vat_code: nil, county_code: nil,
                    vat_group_membership: nil, addresses: [])
       super(name:, short_name:, taxpayer_id:, vat_code:, county_code:, incorporation:, vat_group_membership:,
@@ -28,6 +30,12 @@ module NavOnlineInvoice
       return taxpayer_id unless vat_code && county_code
 
       "#{taxpayer_id}-#{vat_code}-#{county_code}"
+    end
+
+    # Leaves out the name and the addresses: for a sole trader they are personal data.
+    def inspect
+      "#<data #{self.class.name} taxpayer_id=#{taxpayer_id.inspect}, incorporation=#{incorporation.inspect}, " \
+        "addresses=#{addresses.size}>"
     end
 
     # The registered office.

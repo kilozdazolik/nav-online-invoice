@@ -15,6 +15,19 @@ RSpec.describe NavOnlineInvoice::SchemaValidator do
     }
   end
 
+  it "leaves the rejected values out of the message, but keeps them in #errors" do
+    invoice = fixture("invoices/invoice_data.xml")
+              .sub("<paymentMethod>TRANSFER</paymentMethod>", "<paymentMethod>Kovács Béla</paymentMethod>")
+              .sub("<exchangeRate>1</exchangeRate>", "<exchangeRate>Secret Ltd</exchangeRate>")
+
+    expect { described_class.validate!(invoice, schema: :data) }
+      .to raise_error(NavOnlineInvoice::SchemaValidationError) { |error|
+        expect(error.message).to include("paymentMethod", "[FILTERED]")
+        expect(error.message).not_to include("Kovács", "Secret Ltd")
+        expect(error.errors.join).to include("Kovács Béla")
+      }
+  end
+
   it "validates invoices against the data schema" do
     expect(described_class.errors(official_request, schema: :data).join).to include("QueryTaxpayerRequest")
   end

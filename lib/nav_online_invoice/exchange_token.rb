@@ -10,6 +10,8 @@ module NavOnlineInvoice
   #
   # @api private
   class ExchangeToken
+    include Redacted
+
     # Seconds kept in reserve for the request to reach NAV.
     MARGIN = 30
 
@@ -27,15 +29,12 @@ module NavOnlineInvoice
       valid_from && (valid_from + (now - received_at))
     end
 
+    # Leaves out the token, which `to_json` and `as_json` would otherwise include.
+    def to_h(&) = super.merge(value: Redactor::FILTERED).to_h(&)
+
     # Leaves out the token.
     def inspect
       "#<data #{self.class.name} value=[FILTERED], valid_from=#{valid_from.inspect}, valid_to=#{valid_to.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

@@ -12,6 +12,8 @@ module NavOnlineInvoice
   # @!attribute items
   #   @return [Array] the results on this page
   class Page
+    include Redacted
+
     def initialize(request_id:, current_page:, total_pages:, items:, raw_xml:)
       super(request_id:, current_page:, total_pages:, items: items.dup.freeze, raw_xml:)
     end
@@ -36,12 +38,6 @@ module NavOnlineInvoice
     def inspect
       "#<data #{self.class.name} request_id=#{request_id.inspect}, current_page=#{current_page}, " \
         "total_pages=#{total_pages}, items=#{size}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

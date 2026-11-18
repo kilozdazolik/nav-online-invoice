@@ -16,6 +16,8 @@ module NavOnlineInvoice
   # @!attribute annulment_decision_user
   #   @return [String, nil] login of the user who decided on the annulment
   class TransactionStatus
+    include Redacted
+
     def initialize(request_id:, results:, original_request_version:, annulment_verification_status:,
                    annulment_decision_date:, annulment_decision_user:, raw_xml:)
       super(request_id:, results: results.dup.freeze, original_request_version:, annulment_verification_status:,
@@ -47,12 +49,6 @@ module NavOnlineInvoice
     def inspect
       "#<data #{self.class.name} request_id=#{request_id.inspect}, results=#{results.inspect}, " \
         "annulment_verification_status=#{annulment_verification_status.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

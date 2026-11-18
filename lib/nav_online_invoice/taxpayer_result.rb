@@ -16,6 +16,8 @@ module NavOnlineInvoice
   # @!attribute raw_xml
   #   @return [String] NAV's answer; contains personal data for sole traders
   class TaxpayerResult
+    include Redacted
+
     # Whether NAV confirmed that the tax number exists.
     #
     # NAV checks only the first 8 digits; use {#matches?} to check a full tax number.
@@ -40,12 +42,6 @@ module NavOnlineInvoice
     def inspect
       "#<data #{self.class.name} request_id=#{request_id.inspect}, validity=#{validity.inspect}, " \
         "info_date=#{info_date.inspect}, taxpayer=#{taxpayer.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

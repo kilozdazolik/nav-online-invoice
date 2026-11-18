@@ -31,16 +31,12 @@ module NavOnlineInvoice
   # @!attribute ins_date
   #   @return [Time] when NAV received it
   class InvoiceDigest
+    include Redacted
+
     # Shows the invoice's identity only; names, tax numbers and amounts are left out.
     def inspect
       "#<data #{self.class.name} invoice_number=#{invoice_number.inspect}, operation=#{operation.inspect}, " \
         "issue_date=#{issue_date.inspect}, ins_date=#{ins_date.inspect}>"
-    end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
     end
   end
 end

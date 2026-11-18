@@ -29,6 +29,8 @@ module NavOnlineInvoice
   #     }
   #   )
   class Configuration
+    include Redacted
+
     ENDPOINTS = {
       test: "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/",
       production: "https://api.onlineszamla.nav.gov.hu/invoiceService/v3/"
@@ -122,12 +124,6 @@ module NavOnlineInvoice
       values = members.map { |name| "#{name}=#{secret?(name) ? Redactor::FILTERED : public_send(name).inspect}" }
       "#<data #{self.class.name} #{values.join(", ")}>"
     end
-    alias to_s inspect
-
-    # Used by +pp+, IRB and the Rails console.
-    def pretty_print(printer)
-      printer.text(inspect)
-    end
 
     private
 
@@ -159,6 +155,8 @@ module NavOnlineInvoice
     #
     # Only the settings that were assigned are passed on, so +throttle = nil+ turns the throttle off.
     class Builder
+      include Redacted
+
       ATTRIBUTES = %i[
         environment login password password_hash signature_key exchange_key tax_number software logger log_payloads
         throttle validate_requests max_retries retry_base_delay open_timeout read_timeout write_timeout clock
@@ -187,11 +185,6 @@ module NavOnlineInvoice
       # Shows the assigned setting names only, never their values.
       def inspect
         "#<#{self.class.name} assigned=#{@values.keys.inspect}>"
-      end
-      alias to_s inspect
-
-      def pretty_print(printer)
-        printer.text(inspect)
       end
     end
 

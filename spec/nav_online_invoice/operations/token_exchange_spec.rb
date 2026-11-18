@@ -41,6 +41,6 @@ RSpec.describe NavOnlineInvoice::Operations::TokenExchange do
   end
 
   it "does not show the exchange key" do
-    expect(operation.inspect).not_to include("spec-exchange-k1")
+    expect([operation.inspect, PP.pp(operation, +"")].join).not_to include("spec-exchange-k1")
   end
 end
