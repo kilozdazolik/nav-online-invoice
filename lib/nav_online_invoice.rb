@@ -134,3 +134,5 @@ module NavOnlineInvoice
     end
   end
 end
+
+require_relative "nav_online_invoice/railtie" if defined?(Rails::Railtie)
