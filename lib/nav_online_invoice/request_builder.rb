@@ -9,8 +9,10 @@ module NavOnlineInvoice
     HEADER_VERSION = "1.0"
 
     # @param config [Configuration]
-    def initialize(config)
+    # @param predecessor_tax_number [String, nil] 8 digits; sent in every request when given
+    def initialize(config, predecessor_tax_number: nil)
       @config = config
+      @predecessor_tax_number = predecessor_tax_number
     end
 
     # @param operation [#request_root, #index_hashes, #build_body] the operation to build
@@ -45,9 +47,14 @@ module NavOnlineInvoice
       xml["common"].user do
         xml["common"].login @config.login
         xml["common"].passwordHash(@config.password_hash, "cryptoType" => "SHA-512")
-        xml["common"].taxNumber @config.tax_number
+        tax_numbers(xml)
         xml["common"].requestSignature(signature, "cryptoType" => "SHA3-512")
       end
+    end
+
+    def tax_numbers(xml)
+      xml["common"].taxNumber @config.tax_number
+      xml["common"].predecessorTaxNumber @predecessor_tax_number if @predecessor_tax_number
     end
 
     def software(xml)

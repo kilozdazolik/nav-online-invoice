@@ -21,15 +21,37 @@ module NavOnlineInvoice
     # @return [Transactions] queries about submissions
     attr_reader :transactions
 
+    # @return [String, nil] the predecessor company this client acts for, see {#with_predecessor}
+    attr_reader :predecessor_tax_number
+
     # @param config [Configuration] defaults to the one set with {NavOnlineInvoice.configure}
-    def initialize(config = NavOnlineInvoice.configuration)
+    # @param predecessor_tax_number [String, nil] see {#with_predecessor}
+    # @raise [ArgumentError] if the predecessor's tax number is malformed
+    def initialize(config = NavOnlineInvoice.configuration, predecessor_tax_number: nil)
       @config = config
-      @builder = RequestBuilder.new(config)
+      if predecessor_tax_number
+        @predecessor_tax_number = Params.tax_number(:predecessor_tax_number, predecessor_tax_number)
+      end
+      @builder = RequestBuilder.new(config, predecessor_tax_number: @predecessor_tax_number)
       @transport = Transport.new(open_timeout: config.open_timeout, read_timeout: config.read_timeout,
                                  write_timeout: config.write_timeout)
       @taxpayers = Taxpayers.new(self)
       @invoices = Invoices.new(self)
       @transactions = Transactions.new(self)
+    end
+
+    # Returns a client that works with the data of a predecessor company (spec 1.10).
+    #
+    # Its queries search the predecessor's invoices and submissions, and its annulments annul the predecessor's
+    # invoices. Tax number lookups and submissions are not affected. The original client is unchanged.
+    #
+    # @example
+    #   client.with_predecessor("11111111-2-41").invoices.digest(direction: :outbound, issue_date: from..to)
+    # @param tax_number [String] the predecessor's tax number, 8 or 11 digits
+    # @return [Client]
+    # @raise [ArgumentError] if the tax number is malformed
+    def with_predecessor(tax_number)
+      self.class.new(config, predecessor_tax_number: tax_number)
     end
 
     # Sends the operation and returns its result.

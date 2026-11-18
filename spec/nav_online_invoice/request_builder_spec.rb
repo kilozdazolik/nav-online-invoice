@@ -46,4 +46,31 @@ RSpec.describe NavOnlineInvoice::RequestBuilder do
       "4EEA49011D372600A10DBCF8199D590DA9C2841D987308F2D83DAE17C2470C42"
     )
   end
+
+  describe "with a predecessor's tax number" do
+    let(:time) { Time.utc(2026, 11, 18, 10) }
+    let(:xml) do
+      described_class.new(build_config, predecessor_tax_number: "11111111").build(operation, request_id: "RID1", time:)
+    end
+
+    def signature(xml)
+      Nokogiri::XML(xml).at_xpath("//common:requestSignature", NavOnlineInvoice::NAMESPACES).text
+    end
+
+    it "sends it after the own tax number" do
+      user = Nokogiri::XML(xml).at_xpath("//common:user", NavOnlineInvoice::NAMESPACES)
+
+      expect(user.element_children.map(&:name))
+        .to eq(%w[login passwordHash taxNumber predecessorTaxNumber requestSignature])
+      expect(user.at_xpath("common:predecessorTaxNumber", NavOnlineInvoice::NAMESPACES).text).to eq("11111111")
+      expect(xml).to be_valid_nav_xml
+    end
+
+    it "keeps the signature and is left out by default" do
+      plain = described_class.new(build_config).build(operation, request_id: "RID1", time:)
+
+      expect(signature(xml)).to eq(signature(plain))
+      expect(plain).not_to include("predecessorTaxNumber")
+    end
+  end
 end

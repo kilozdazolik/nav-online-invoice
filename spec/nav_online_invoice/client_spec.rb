@@ -107,6 +107,55 @@ RSpec.describe NavOnlineInvoice::Client do
     expect(log.string).not_to include(config.password_hash, "specuser0000001")
   end
 
+  describe "#with_predecessor" do
+    let(:base) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3" }
+    let(:predecessor) { client.with_predecessor("11111111-2-41") }
+
+    def with_predecessor = ->(request) { request.body.include?("<common:predecessorTaxNumber>11111111<") }
+
+    it "sends the predecessor's tax number in queries, status queries and annulments" do
+      stub_request(:post, "#{base}/queryInvoiceCheck").to_return(nav_answer("query_invoice_check/true.xml"))
+      stub_request(:post, "#{base}/queryTransactionStatus")
+        .to_return(nav_answer("query_transaction_status/processing.xml"))
+      stub_request(:post, "#{base}/tokenExchange").to_return(nav_answer("token_exchange/ok.xml"))
+      stub_request(:post, "#{base}/manageAnnulment").to_return(
+        body: fixture("responses/manage_invoice/ok.xml").gsub("ManageInvoiceResponse", "ManageAnnulmentResponse")
+      )
+
+      predecessor.invoices.check("OLD-0001", direction: :outbound)
+      predecessor.transactions.status("TRANSACTION1")
+      predecessor.invoices.annul([{ reference: "OLD-0001", code: :erratic_data, reason: "Wrong customer" }])
+
+      %w[queryInvoiceCheck queryTransactionStatus manageAnnulment].each do |name|
+        expect(a_request(:post, "#{base}/#{name}").with(&with_predecessor)).to have_been_made.once
+      end
+    end
+
+    it "leaves the original client unchanged" do
+      stub_request(:post, "#{base}/queryInvoiceCheck").to_return(nav_answer("query_invoice_check/true.xml"))
+
+      predecessor
+      client.invoices.check("INV-0001", direction: :outbound)
+
+      expect(client.predecessor_tax_number).to be_nil
+      expect(predecessor.predecessor_tax_number).to eq("11111111")
+      expect(a_request(:post, "#{base}/queryInvoiceCheck").with(&with_predecessor)).not_to have_been_made
+    end
+
+    it "rejects a malformed tax number before sending anything" do
+      expect { client.with_predecessor("123") }.to raise_error(ArgumentError, /predecessor_tax_number/)
+    end
+
+    it "does not retry a predecessor NAV does not accept" do
+      stub_request(:post, "#{base}/queryInvoiceCheck")
+        .to_return(nav_answer("general_error/invalid_predecessor_tax_number.xml", status: 500))
+
+      expect { predecessor.invoices.check("OLD-0001", direction: :outbound) }
+        .to raise_error(NavOnlineInvoice::CustomerError, /INVALID_PREDECESSOR_TAX_NUMBER/)
+      expect(a_request(:post, "#{base}/queryInvoiceCheck")).to have_been_made.once
+    end
+  end
+
   describe "submissions" do
     let(:submit_endpoint) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/manageInvoice" }
     let(:submission) do

@@ -7,6 +7,7 @@ RSpec.describe NavOnlineInvoice::ApiError do
       "INVALID_REQUEST_SIGNATURE" => NavOnlineInvoice::AuthenticationError,
       "FORBIDDEN" => NavOnlineInvoice::PermissionError,
       "INVALID_USER_RELATION" => NavOnlineInvoice::CustomerError,
+      "INVALID_PREDECESSOR_TAX_NUMBER" => NavOnlineInvoice::CustomerError,
       "INVALID_TIMESTAMP" => NavOnlineInvoice::RequestError,
       "BAD_QUERY_PARAM_OVERLAP" => NavOnlineInvoice::RequestError,
       "INVALID_EXCHANGE_TOKEN" => NavOnlineInvoice::ExchangeTokenError,
