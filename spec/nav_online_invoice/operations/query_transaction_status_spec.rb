@@ -42,7 +42,8 @@ RSpec.describe NavOnlineInvoice::Operations::QueryTransactionStatus do
     status = parse("with_original_request.xml")
 
     expect(status.results.first.original_request).to eq(fixture("invoices/invoice_data.xml"))
-    expect(status).to have_attributes(accepted?: true, annulment_verification_status: :verification_done,
+    expect(status).to have_attributes(accepted?: true, annulled?: true, annulment_pending?: false,
+                                      annulment_verification_status: :verification_done,
                                       annulment_decision_date: Time.utc(2026, 11, 17, 9, 30))
   end
 

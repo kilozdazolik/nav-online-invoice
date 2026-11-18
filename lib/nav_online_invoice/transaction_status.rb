@@ -22,9 +22,20 @@ module NavOnlineInvoice
             annulment_decision_date:, annulment_decision_user:, raw_xml:)
     end
 
-    # Whether NAV finished every invoice without errors.
+    # Whether NAV processed every item without errors. For an annulment this does not mean it took effect: see
+    # {#annulment_pending?} and {#annulled?}.
     def accepted?
       results.all? { |result| result.done? && !result.errors? }
+    end
+
+    # Whether the annulments wait for approval on NAV's web interface.
+    def annulment_pending?
+      annulment_verification_status == :verification_pending
+    end
+
+    # Whether a user approved the annulments, so the invoices are annulled.
+    def annulled?
+      annulment_verification_status == :verification_done
     end
 
     # Leaves out the raw XML and the decision user's login.

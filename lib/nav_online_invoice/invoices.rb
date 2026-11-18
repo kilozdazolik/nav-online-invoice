@@ -135,14 +135,39 @@ module NavOnlineInvoice
     # @raise [ArgumentError, SchemaValidationError, SubmissionTooLargeError] before any request is sent
     # @raise [UnknownOutcomeError] if no answer arrived
     def submit(items, compress: :auto)
-      exchange_key = @client.config.exchange_key
-      raise ConfigurationError, "exchange_key is required to submit invoices" unless exchange_key
-
+      exchange_key = exchange_key!
       prepared, compressed = SubmissionItems.prepare(items, compress:, validate: @client.config.validate_requests)
       with_token(exchange_key) { |token| Operations::ManageInvoice.new(token:, items: prepared, compressed:) }
     end
 
+    # Asks NAV to annul up to 100 invoices or modifications that were submitted with wrong data.
+    #
+    # A technical annulment takes effect only after a user approves it on NAV's web interface; until then
+    # {TransactionStatus#annulment_pending?} is true. Sent once, like {#submit}, with the same errors.
+    #
+    # @example
+    #   submission = client.invoices.annul([{ reference: "INV-2026-0001", code: :erratic_data,
+    #                                         reason: "Sent with a wrong customer" }])
+    # @param items [Array<Hash>] in index order, each with:
+    #   +:reference+ (the invoice or modification number), +:code+ (+:erratic_data+, +:erratic_invoice_number+,
+    #   +:erratic_invoice_issue_date+ or +:erratic_electronic_hash_value+), +:reason+ (up to 1024 characters) and
+    #   optionally +:timestamp+ (a Time, now by default)
+    # @return [Submission]
+    # @raise [ConfigurationError] if the configuration has no exchange_key
+    # @raise [ArgumentError, SchemaValidationError] before any request is sent
+    # @raise [UnknownOutcomeError] if no answer arrived
+    def annul(items)
+      exchange_key = exchange_key!
+      prepared = AnnulmentItems.prepare(items, time: @client.config.clock.call,
+                                               validate: @client.config.validate_requests)
+      with_token(exchange_key) { |token| Operations::ManageAnnulment.new(token:, items: prepared) }
+    end
+
     private
+
+    def exchange_key!
+      @client.config.exchange_key or raise ConfigurationError, "exchange_key is required to submit to NAV"
+    end
 
     # Requests a token and sends the operation built with it. A token that expired while the request waited for the
     # throttle is replaced once; nothing was sent with it.

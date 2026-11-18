@@ -22,11 +22,11 @@ module NavOnlineInvoice
     # @param items [Array<Hash>]
     # @param compress [Boolean, :auto]
     # @param validate [Boolean] check each invoice against the invoiceData schema
-    # @return [Array(Array<Operations::ManageInvoice::Item>, Boolean)] the items and whether they are compressed
+    # @return [Array(Array<Operations::Manage::Item>, Boolean)] the items and whether they are compressed
     # @raise [ArgumentError, SchemaValidationError, SubmissionTooLargeError]
     def prepare(items, compress:, validate:)
-      unless items.is_a?(Array) && items.all?(Hash) && items.size.between?(1, Operations::ManageInvoice::MAX_ITEMS)
-        raise ArgumentError, "items must be an Array of 1-#{Operations::ManageInvoice::MAX_ITEMS} Hashes"
+      unless items.is_a?(Array) && items.all?(Hash) && items.size.between?(1, Operations::Manage::MAX_ITEMS)
+        raise ArgumentError, "items must be an Array of 1-#{Operations::Manage::MAX_ITEMS} Hashes"
       end
 
       invoices = items.map.with_index(1) { |item, index| invoice(item, "items[#{index}]", validate) }
@@ -83,7 +83,7 @@ module NavOnlineInvoice
       raise ArgumentError, "invoices with completenessIndicator cannot be compressed" if compress == true && complete
       return compress unless compress == :auto
 
-      !complete && estimated_bytes(invoices) > Operations::ManageInvoice::MAX_BODY_BYTES
+      !complete && estimated_bytes(invoices) > Operations::Manage::MAX_BODY_BYTES
     end
 
     def estimated_bytes(invoices)
@@ -92,8 +92,8 @@ module NavOnlineInvoice
 
     def encode(invoice, compressed)
       data = Payload.encode(invoice.xml, compressed:)
-      Operations::ManageInvoice::Item.new(operation: invoice.operation, data:,
-                                          electronic_invoice_hash: hash_for(invoice, data))
+      Operations::Manage::Item.new(operation: invoice.operation, data:,
+                                   electronic_invoice_hash: hash_for(invoice, data))
     end
 
     def hash_for(invoice, data)

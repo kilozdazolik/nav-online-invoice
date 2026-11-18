@@ -51,7 +51,7 @@ RSpec.describe NavOnlineInvoice::Operations::ManageInvoice do
   end
 
   it "takes 1 to 100 invoices" do
-    expect { described_class.new(token:, items: [], compressed: false) }.to raise_error(ArgumentError, /1-100/)
+    expect { described_class.new(token:, items: [], compressed: false) }.to raise_error(ArgumentError, /1-100 items/)
     expect { described_class.new(token:, items: [item] * 101, compressed: false) }.to raise_error(ArgumentError)
   end
 

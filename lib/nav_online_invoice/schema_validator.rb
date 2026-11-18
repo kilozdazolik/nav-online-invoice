@@ -7,8 +7,9 @@ module NavOnlineInvoice
   module SchemaValidator
     SCHEMA_DIR = File.expand_path("../../schemas", __dir__)
 
-    # +:api+ for requests and responses, +:data+ for invoices in the 3.0 format.
-    SCHEMAS = { api: "invoiceApi.xsd", data: "invoiceData.xsd" }.freeze
+    # +:api+ for requests and responses, +:data+ for invoices in the 3.0 format, +:annulment+ for technical
+    # annulments.
+    SCHEMAS = { api: "invoiceApi.xsd", data: "invoiceData.xsd", annulment: "invoiceAnnulment.xsd" }.freeze
 
     @mutex = Mutex.new
     @schemas = {}
@@ -17,7 +18,7 @@ module NavOnlineInvoice
       # Checks the XML against a schema.
       #
       # @param xml [String]
-      # @param schema [Symbol] +:api+ or +:data+
+      # @param schema [Symbol] +:api+, +:data+ or +:annulment+
       # @return [String] the same XML
       # @raise [SchemaValidationError] if the XML does not match the schema
       def validate!(xml, schema: :api)
@@ -30,7 +31,7 @@ module NavOnlineInvoice
       # Returns the schema violations in the XML.
       #
       # @param xml [String]
-      # @param schema [Symbol] +:api+ or +:data+
+      # @param schema [Symbol] +:api+, +:data+ or +:annulment+
       # @return [Array<String>] empty if the XML is valid
       def errors(xml, schema: :api)
         document, syntax_error = parse(xml)

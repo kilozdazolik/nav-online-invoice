@@ -127,4 +127,26 @@ RSpec.describe NavOnlineInvoice::Invoices do
       expect(invoices.submit(items).transaction_id).to eq("4Q8O2ZCTX1J8WGZ2")
     end
   end
+
+  describe "#annul" do
+    let(:items) { [{ reference: "INV-2026-0001", code: :erratic_invoice_number, reason: "Wrong number" }] }
+
+    it "requests a token and submits the annulments with it" do
+      stub_request(:post, "#{base}/tokenExchange").to_return(body: fixture("responses/token_exchange/ok.xml"))
+      stub_request(:post, "#{base}/manageAnnulment").to_return(
+        body: fixture("responses/manage_invoice/ok.xml").gsub("ManageInvoiceResponse", "ManageAnnulmentResponse")
+      )
+
+      expect(invoices.annul(items).transaction_id).to eq("4Q8O2ZCTX1J8WGZ2")
+      expect(a_request(:post, "#{base}/manageAnnulment").with do |request|
+        data = Nokogiri::XML(request.body).at_xpath("//api:invoiceAnnulment", NavOnlineInvoice::NAMESPACES).text
+        NavOnlineInvoice::Payload.decode(data, compressed: false).include?("ERRATIC_INVOICE_NUMBER")
+      end).to have_been_made.once
+    end
+
+    it "sends nothing for an invalid annulment" do
+      expect { invoices.annul([items.first.merge(code: :typo)]) }.to raise_error(ArgumentError)
+      expect(a_request(:post, /onlineszamla/)).not_to have_been_made
+    end
+  end
 end
