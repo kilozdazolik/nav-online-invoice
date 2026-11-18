@@ -22,7 +22,9 @@ RSpec.describe NavOnlineInvoice::Operations::QueryTransactionStatus do
   it "reads a submission in progress" do
     status = parse("processing.xml")
 
-    expect(status.results).to contain_exactly(have_attributes(index: 1, status: :processing, done?: false))
+    expect(status.results)
+      .to contain_exactly(have_attributes(index: 1, status: :processing, done?: false, pending?: true))
+    expect(status).not_to be_finished
     expect(status).to have_attributes(original_request_version: "3.0", accepted?: false)
   end
 
@@ -35,7 +37,7 @@ RSpec.describe NavOnlineInvoice::Operations::QueryTransactionStatus do
       result_code: :error, error_code: "INVOICE_LINE_MISSING", tag: "invoiceLines", value: "0", line: 1,
       original_invoice_number: "INV-2026-0000"
     )
-    expect(done).to have_attributes(done?: true, errors?: false)
+    expect(done).to have_attributes(done?: true, errors?: false, final?: true)
   end
 
   it "decodes the original request and reads annulment data" do

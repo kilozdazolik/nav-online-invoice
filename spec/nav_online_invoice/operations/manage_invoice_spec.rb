@@ -57,7 +57,7 @@ RSpec.describe NavOnlineInvoice::Operations::ManageInvoice do
 
   it "stops before sending once the token is about to expire" do
     operation = described_class.new(token:, items: [item], compressed: false)
-    allow(NavOnlineInvoice::ExchangeToken).to receive(:now).and_return(1000.0 + 280)
+    allow(NavOnlineInvoice::Monotonic).to receive(:now).and_return(1000.0 + 280)
 
     expect { operation.check_before_send! }.to raise_error(NavOnlineInvoice::ExchangeTokenError, /expired/)
   end

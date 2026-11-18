@@ -25,7 +25,7 @@ module NavOnlineInvoice
           value: Crypto.decrypt_token(text(root, "api:encodedExchangeToken"), @exchange_key),
           valid_from: time(root, "api:tokenValidityFrom"),
           valid_to: time(root, "api:tokenValidityTo"),
-          received_at: ExchangeToken.now
+          received_at: Monotonic.now
         )
       end
 

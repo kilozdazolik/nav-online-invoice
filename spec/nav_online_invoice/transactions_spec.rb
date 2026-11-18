@@ -33,4 +33,66 @@ RSpec.describe NavOnlineInvoice::Transactions do
     expect(transactions.each_transaction(ins_date: range).to_a).to be_empty
     expect(a_request(:post, endpoint)).to have_been_made.once
   end
+
+  describe "#wait" do
+    let(:status_endpoint) { "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3/queryTransactionStatus" }
+    let(:clock) { [0.0] }
+    let(:pauses) { [] }
+
+    before do
+      allow(NavOnlineInvoice::Monotonic).to receive(:now) { clock.first }
+      allow(transactions).to receive(:sleep) do |seconds|
+        pauses << seconds
+        clock[0] += seconds
+      end
+    end
+
+    def answers(*names)
+      stub_request(:post, status_endpoint)
+        .to_return(*names.map { |name| { body: fixture("responses/query_transaction_status/#{name}.xml") } })
+    end
+
+    it "asks until NAV has finished with every item" do
+      answers("processing", "processing", "aborted")
+
+      status = transactions.wait("TRANSACTION1")
+
+      expect(status).to have_attributes(finished?: true, accepted?: false)
+      expect(a_request(:post, status_endpoint)).to have_been_made.times(3)
+    end
+
+    it "waits longer each time, up to 15 seconds" do
+      answers("processing")
+
+      transactions.wait("TRANSACTION1", timeout: 100)
+
+      expect(pauses.first).to be_between(1.6, 2.4)
+      expect(pauses.each_cons(2).count { |a, b| b > a }).to be >= 3
+      expect(pauses.max).to be <= 18
+    end
+
+    it "returns the last status at the timeout" do
+      answers("processing")
+
+      expect(transactions.wait("TRANSACTION1", timeout: 10)).to have_attributes(finished?: false)
+      expect(clock.first).to be_within(0.01).of(10)
+    end
+
+    it "keeps asking while NAV does not know the transaction yet" do
+      answers("not_found", "aborted")
+
+      expect(transactions.wait("TRANSACTION1")).to be_finished
+    end
+
+    it "returns nil if NAV never knew the transaction" do
+      answers("not_found")
+
+      expect(transactions.wait("TRANSACTION1", timeout: 5)).to be_nil
+    end
+
+    it "rejects a bad timeout or interval" do
+      expect { transactions.wait("TRANSACTION1", timeout: -1) }.to raise_error(ArgumentError, /timeout/)
+      expect { transactions.wait("TRANSACTION1", interval: 0) }.to raise_error(ArgumentError, /interval/)
+    end
+  end
 end

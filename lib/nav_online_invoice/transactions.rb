@@ -3,6 +3,9 @@
 module NavOnlineInvoice
   # Queries about submissions to NAV. Use through {Client#transactions}.
   class Transactions
+    # The longest pause between two status queries in {#wait}, in seconds.
+    MAX_INTERVAL = 15
+
     # @api private
     def initialize(client)
       @client = client
@@ -21,6 +24,33 @@ module NavOnlineInvoice
     # @raise [DecodeError] if a returned original request cannot be decoded
     def status(transaction_id, return_original_request: false)
       @client.execute(Operations::QueryTransactionStatus.new(transaction_id, return_original_request:))
+    end
+
+    # Asks for the status until NAV has finished with every item, or until the timeout.
+    #
+    # The pause between queries starts at +interval+ and grows to at most 15 seconds. It does not wait for
+    # annulments to be approved.
+    #
+    # @example
+    #   status = client.transactions.wait(submission.transaction_id, timeout: 120)
+    #   if status&.finished? then store(status) else check_again_later end
+    # @param transaction_id [String]
+    # @param timeout [Numeric] seconds
+    # @param interval [Numeric] seconds before the second query
+    # @return [TransactionStatus, nil] the last status, finished or not; nil if NAV still knows no such
+    #   transaction at the timeout
+    # @raise [ArgumentError] if a parameter is invalid
+    def wait(transaction_id, timeout: 60, interval: 2)
+      check_wait(timeout, interval)
+      deadline = Monotonic.now + timeout
+      loop do
+        current = status(transaction_id)
+        remaining = deadline - Monotonic.now
+        return current if current&.finished? || remaining <= 0
+
+        sleep([interval * rand(0.8..1.2), remaining].min)
+        interval = [interval * 1.5, MAX_INTERVAL].min
+      end
     end
 
     # Lists the submissions NAV received in a time range, one page at a time.
@@ -47,6 +77,13 @@ module NavOnlineInvoice
     def each_transaction(ins_date:, status: nil, max_pages: nil, &)
       items = Paging.items(max_pages) { |page| list(ins_date:, status:, page:) }
       block_given? ? items.each(&) : items
+    end
+
+    private
+
+    def check_wait(timeout, interval)
+      raise ArgumentError, "timeout must be a number of 0 or more" unless timeout.is_a?(Numeric) && !timeout.negative?
+      raise ArgumentError, "interval must be a positive number" unless interval.is_a?(Numeric) && interval.positive?
     end
   end
 end

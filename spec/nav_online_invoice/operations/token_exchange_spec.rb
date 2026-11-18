@@ -21,7 +21,7 @@ RSpec.describe NavOnlineInvoice::Operations::TokenExchange do
   end
 
   it "decrypts the token and reads its validity" do
-    allow(NavOnlineInvoice::ExchangeToken).to receive(:now).and_return(100.0)
+    allow(NavOnlineInvoice::Monotonic).to receive(:now).and_return(100.0)
 
     expect(parse).to have_attributes(
       value: "SPEC-TOKEN-0123456789-ABCDEF", received_at: 100.0,

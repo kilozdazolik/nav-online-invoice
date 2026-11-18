@@ -121,9 +121,9 @@ module NavOnlineInvoice
 
     # @return [Array(Object, Integer)] the block's result and its duration in milliseconds
     def timed
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      started = Monotonic.now
       result = yield
-      [result, ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round]
+      [result, ((Monotonic.now - started) * 1000).round]
     end
 
     def retry_delay(attempt)

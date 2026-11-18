@@ -22,6 +22,11 @@ module NavOnlineInvoice
             annulment_decision_date:, annulment_decision_user:, raw_xml:)
     end
 
+    # Whether NAV finished with every item, accepted or not. Annulments may still wait for approval.
+    def finished?
+      results.any? && results.all?(&:final?)
+    end
+
     # Whether NAV processed every item without errors. For an annulment this does not mean it took effect: see
     # {#annulment_pending?} and {#annulled?}.
     def accepted?

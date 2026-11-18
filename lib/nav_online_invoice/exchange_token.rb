@@ -13,11 +13,8 @@ module NavOnlineInvoice
     # Seconds kept in reserve for the request to reach NAV.
     MARGIN = 30
 
-    # Seconds of the current monotonic clock.
-    def self.now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-
     # Whether the token is still valid for a request sent now.
-    def fresh?(now = self.class.now)
+    def fresh?(now = Monotonic.now)
       return false unless valid_from && valid_to
 
       (valid_to - valid_from) - (now - received_at) > MARGIN

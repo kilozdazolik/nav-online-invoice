@@ -97,8 +97,10 @@ RSpec.describe NavOnlineInvoice::Invoices do
 
     it "replaces a token that expired while waiting, and still submits once" do
       stub_submission
-      # received, checked (stale); received again, checked (fresh)
-      allow(NavOnlineInvoice::ExchangeToken).to receive(:now).and_return(0.0, 280.0, 280.0, 281.0)
+      clock = 0.0
+      allow(NavOnlineInvoice::Monotonic).to receive(:now) { clock }
+      waits = 0
+      allow(throttle).to receive(:wait) { |name| clock += 280 if name == "manageInvoice" && (waits += 1) == 1 }
 
       expect(invoices.submit(items).transaction_id).to eq("4Q8O2ZCTX1J8WGZ2")
       expect(a_request(:post, "#{base}/tokenExchange")).to have_been_made.twice

@@ -33,6 +33,16 @@ module NavOnlineInvoice
       status == :aborted
     end
 
+    # Whether NAV finished with this item, either way.
+    def final?
+      done? || aborted?
+    end
+
+    # Whether NAV is still processing this item.
+    def pending?
+      !final?
+    end
+
     # Whether NAV reported a technical error or a business error (warnings do not count).
     def errors?
       technical_validation_messages.any? || business_validation_messages.any? { |m| m.result_code == :error }
