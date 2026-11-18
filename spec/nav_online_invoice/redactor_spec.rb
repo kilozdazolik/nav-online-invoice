@@ -32,6 +32,16 @@ RSpec.describe NavOnlineInvoice::Redactor do
     )
   end
 
+  it "also hides CDATA, comments and prefixes with dots or hyphens" do
+    xml = "<login><![CDATA[user<1]]></login><a.b:login>user2</a.b:login>" \
+          "<ns-2:invoiceData><!-- note -->QUJD</ns-2:invoiceData>"
+
+    expect(described_class.redact(xml)).to eq(
+      "<login>[FILTERED]</login><a.b:login>[FILTERED]</a.b:login>" \
+      "<ns-2:invoiceData>[FILTERED 17 bytes]</ns-2:invoiceData>"
+    )
+  end
+
   it "keeps everything else" do
     expect(redacted).to include("<common:requestId>RID215118906689</common:requestId>",
                                 "<taxNumber>22222222</taxNumber>")

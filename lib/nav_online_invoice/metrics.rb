@@ -92,7 +92,8 @@ module NavOnlineInvoice
       rescue TransportError => e
         raise unless e.retryable? && attempt <= @max_retries
 
-        sleep(@retry_base_delay * (2**(attempt - 1)))
+        Retry.wait(attempt, base_delay: @retry_base_delay, logger: @logger,
+                            message: "queryServiceMetrics: #{e.message}")
         retry
       end
     end

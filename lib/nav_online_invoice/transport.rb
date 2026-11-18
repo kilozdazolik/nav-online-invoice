@@ -9,7 +9,7 @@ module NavOnlineInvoice
     Response = Data.define(:status, :body)
 
     NETWORK_ERRORS = [
-      Timeout::Error, SocketError, SystemCallError, IOError, EOFError, OpenSSL::SSL::SSLError,
+      Timeout::Error, SocketError, SystemCallError, IOError, OpenSSL::SSL::SSLError,
       Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Zlib::Error
     ].freeze
     private_constant :NETWORK_ERRORS
@@ -55,9 +55,14 @@ module NavOnlineInvoice
       TransportError.new("#{error.class}: #{error.message}", retryable: !certificate, request_sent:)
     end
 
+    # NAV is reached only over verified TLS 1.2 or later.
     def http(uri)
+      raise ArgumentError, "NAV URLs must use https, got #{uri.scheme}" unless uri.scheme == "https"
+
       Net::HTTP.new(uri.host, uri.port).tap do |http|
-        http.use_ssl = uri.scheme == "https"
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        http.min_version = OpenSSL::SSL::TLS1_2_VERSION
         http.open_timeout = @open_timeout
         http.read_timeout = @read_timeout
         http.write_timeout = @write_timeout

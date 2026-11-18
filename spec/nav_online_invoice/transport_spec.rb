@@ -79,4 +79,20 @@ RSpec.describe NavOnlineInvoice::Transport do
     expect(transport.get(uri)).to eq(described_class::Response.new(status: 200, body: "<ok/>"))
     expect(a_request(:get, uri).with { |request| request.body.to_s.empty? }).to have_been_made.once
   end
+
+  it "refuses a URL without https" do
+    expect { transport.post(URI("http://api-test.onlineszamla.nav.gov.hu/x"), "<request/>") }
+      .to raise_error(ArgumentError, /https/)
+  end
+
+  it "verifies the certificate and requires TLS 1.2 or later" do
+    http = Net::HTTP.new(uri.host, uri.port)
+    allow(Net::HTTP).to receive(:new).and_return(http)
+    stub_request(:post, uri).to_return(body: "<ok/>")
+
+    transport.post(uri, "<request/>")
+
+    expect(http).to have_attributes(use_ssl?: true, verify_mode: OpenSSL::SSL::VERIFY_PEER,
+                                    min_version: OpenSSL::SSL::TLS1_2_VERSION)
+  end
 end

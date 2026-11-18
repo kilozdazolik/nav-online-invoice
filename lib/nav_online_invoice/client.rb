@@ -73,16 +73,24 @@ module NavOnlineInvoice
       begin
         attempt += 1
         perform(operation, attempt)
-      rescue TransportError, TemporaryError => e
-        raise unless e.retryable? && operation.auto_retry? && attempt <= config.max_retries
+      rescue TransportError, TemporaryError, MaintenanceError => e
+        raise unless retry?(e, operation, attempt)
 
-        log(:warn) { "NAV #{operation.name} attempt #{attempt} failed, retrying: #{e.message}" }
-        pause(retry_delay(attempt))
+        Retry.wait(attempt, base_delay: config.retry_base_delay, logger: config.logger,
+                            message: "#{operation.name}: #{e.message}")
         retry
       end
     end
 
     private
+
+    # Temporary failures of operations that may repeat. A MaintenanceError only when it came without NAV's
+    # MAINTENANCE_MODE code, i.e. from a network device: NAV's own maintenance takes longer than a retry.
+    def retry?(error, operation, attempt)
+      return false if error.is_a?(MaintenanceError) && error.code
+
+      error.retryable? && operation.auto_retry? && attempt <= config.max_retries
+    end
 
     def perform(operation, attempt)
       request_id, time, xml = build_request(operation)
@@ -158,14 +166,6 @@ module NavOnlineInvoice
       started = Monotonic.now
       result = yield
       [result, ((Monotonic.now - started) * 1000).round]
-    end
-
-    def retry_delay(attempt)
-      config.retry_base_delay * (2**(attempt - 1)) * rand(0.8..1.2)
-    end
-
-    def pause(seconds)
-      sleep(seconds) if seconds.positive?
     end
 
     def log(level, &)

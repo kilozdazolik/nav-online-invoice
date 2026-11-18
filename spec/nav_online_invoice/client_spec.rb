@@ -59,6 +59,13 @@ RSpec.describe NavOnlineInvoice::Client do
     expect(client.taxpayers.query("12345678")).to be_valid
   end
 
+  it "retries a query answered by a network device with a bare 503" do
+    stub_request(:post, endpoint).to_return(status: 503, body: "Service Unavailable")
+                                 .then.to_return(nav_answer("query_taxpayer/valid.xml"))
+
+    expect(client.taxpayers.query("12345678")).to be_valid
+  end
+
   it "stops after max_retries" do
     stub_request(:post, endpoint).to_return(nav_answer("general_error/operation_failed.xml", status: 500))
 

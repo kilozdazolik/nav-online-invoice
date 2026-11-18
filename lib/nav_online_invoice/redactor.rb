@@ -10,9 +10,13 @@ module NavOnlineInvoice
 
     PAYLOADS = %w[invoiceData invoiceAnnulment originalRequest].freeze
 
-    PATTERN = %r{(<(?:\w+:)?(?:#{ELEMENTS.join("|")})(?:\s[^>]*)?>)[^<]*(</)}
-    PAYLOAD_PATTERN = %r{(<(?:\w+:)?(?:#{PAYLOADS.join("|")})(?:\s[^>]*)?>)([^<]*)(</)}
-    private_constant :PATTERN, :PAYLOAD_PATTERN
+    # A namespace prefix may hold dots and hyphens; the content may hold CDATA sections and comments.
+    PREFIX = "(?:[\\w.-]+:)?"
+    # Possessive, so a long payload or a missing end tag cannot make the match backtrack.
+    CONTENT = "(?:[^<]++|<!\\[CDATA\\[.*?\\]\\]>|<!--.*?-->)*+"
+    PATTERN = %r{(<#{PREFIX}(?:#{ELEMENTS.join("|")})(?:\s[^>]*)?>)#{CONTENT}(</)}m
+    PAYLOAD_PATTERN = %r{(<#{PREFIX}(?:#{PAYLOADS.join("|")})(?:\s[^>]*)?>)(#{CONTENT})(</)}m
+    private_constant :PREFIX, :CONTENT, :PATTERN, :PAYLOAD_PATTERN
 
     module_function
 

@@ -21,6 +21,12 @@ RSpec.describe NavOnlineInvoice::Payload do
       .to raise_error(NavOnlineInvoice::DecodeError, /UTF-8/)
   end
 
+  it "stops unpacking data that would be larger than 20 MB" do
+    bomb = [Zlib.gzip("\0" * 20_000_001)].pack("m0")
+
+    expect { described_class.decode(bomb, compressed: true) }.to raise_error(NavOnlineInvoice::DecodeError, /20000000/)
+  end
+
   describe ".encode" do
     it "encodes to strict base64 without line breaks" do
       encoded = described_class.encode(xml * 20, compressed: false)
