@@ -18,7 +18,7 @@ module NavOnlineInvoice
       # @!attribute data
       #   @return [String] the XML, base64 and maybe gzipped; the index hash is computed from this string
       # @!attribute electronic_invoice_hash
-      #   @return [Hash, nil] +{ value:, crypto_type: }+; invoices only
+      #   @return [ElectronicInvoiceHash, nil] invoices only
       Item = Data.define(:operation, :data, :electronic_invoice_hash) do
         include Redacted
 
@@ -66,7 +66,7 @@ module NavOnlineInvoice
       def parse(document, request_id:, **)
         Submission.new(transaction_id: text(document.root, "api:transactionId"), request_id:,
                        item_count: @items.size, compressed: compressed?,
-                       electronic_invoice_hashes: @items.map { |item| item.electronic_invoice_hash&.fetch(:value) })
+                       electronic_invoice_hashes: @items.map(&:electronic_invoice_hash))
       end
 
       # Leaves out the token and the items.

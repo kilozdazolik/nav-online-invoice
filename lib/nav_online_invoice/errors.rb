@@ -132,15 +132,8 @@ module NavOnlineInvoice
   # Subclasses group the codes by what the caller can do about them. An unknown code is raised as
   # a plain ApiError.
   class ApiError < Error
-    # One schema violation reported by NAV in a GeneralErrorResponse.
-    #
-    # @!attribute result_code
-    #   @return [Symbol] +:error+ or +:critical+
-    # @!attribute error_code
-    #   @return [String, nil]
-    # @!attribute message
-    #   @return [String, nil] the element, its value and the expected value
-    TechnicalValidationMessage = Data.define(:result_code, :error_code, :message)
+    # Kept for code written against 0.2; the class moved to {NavOnlineInvoice::TechnicalValidationMessage}.
+    TechnicalValidationMessage = NavOnlineInvoice::TechnicalValidationMessage
 
     # @return [String, nil] NAV's errorCode, e.g. "FORBIDDEN"
     attr_reader :code
@@ -207,7 +200,7 @@ module NavOnlineInvoice
 
   # The exchange token was rejected or expired before the request was sent. Nothing was stored at NAV;
   # submitting again, which requests a new token, is safe.
-  class ExchangeTokenError < RequestError
+  class ExchangeTokenError < ApiError
     def retryable?
       true
     end

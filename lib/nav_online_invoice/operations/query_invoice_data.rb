@@ -21,8 +21,7 @@ module NavOnlineInvoice
           invoice_xml: Payload.decode(text(result, "api:invoiceData"), compressed: compressed),
           compressed: compressed,
           audit_data: audit_data(result.at_xpath("api:auditData", NAMESPACES)),
-          electronic_invoice_hash: hash&.text,
-          electronic_invoice_hash_type: hash&.[]("cryptoType"),
+          electronic_invoice_hash: hash && ElectronicInvoiceHash.new(value: hash.text, crypto_type: hash["cryptoType"]),
           raw_xml: raw_xml
         )
       end

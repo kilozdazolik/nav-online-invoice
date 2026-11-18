@@ -82,7 +82,8 @@ RSpec.describe NavOnlineInvoice::Operations::QueryInvoiceDigest do
       issue_date: Date.new(2026, 11, 16), supplier_name: "EXAMPLE TRADING KFT.", customer_tax_number: "87654321",
       payment_method: :transfer, appearance: :electronic, source: :xml, currency: "HUF",
       net_amount: BigDecimal("20000"), vat_amount_huf: BigDecimal("5400"), original_invoice_number: "INV-2026-0000",
-      modification_index: 2, ins_date: Time.utc(2026, 11, 16, 8, 15, 30.12r), completeness_indicator: false
+      modification_index: 2, ins_date: Time.utc(2026, 11, 16, 8, 15, 30.12r), completeness_indicator: false,
+      complete?: false
     )
     expect(invoice.net_amount).to be_a(BigDecimal)
   end

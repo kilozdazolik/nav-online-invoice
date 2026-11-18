@@ -2,7 +2,7 @@
 
 module NavOnlineInvoice
   InvoiceDataResult = Data.define(:request_id, :invoice_xml, :compressed, :audit_data, :electronic_invoice_hash,
-                                  :electronic_invoice_hash_type, :raw_xml)
+                                  :raw_xml)
 
   # The full data of one invoice, as returned by {Invoices#data}.
   #
@@ -11,7 +11,7 @@ module NavOnlineInvoice
   # @!attribute audit_data
   #   @return [AuditData]
   # @!attribute electronic_invoice_hash
-  #   @return [String, nil] for electronic invoices
+  #   @return [ElectronicInvoiceHash, nil] for electronic invoices
   class InvoiceDataResult
     include Redacted
 

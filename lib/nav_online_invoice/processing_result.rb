@@ -11,7 +11,7 @@ module NavOnlineInvoice
   # @!attribute status
   #   @return [Symbol] +:received+, +:processing+, +:saved+, +:done+ or +:aborted+
   # @!attribute technical_validation_messages
-  #   @return [Array<ApiError::TechnicalValidationMessage>]
+  #   @return [Array<TechnicalValidationMessage>]
   # @!attribute business_validation_messages
   #   @return [Array<BusinessValidationMessage>]
   # @!attribute original_request

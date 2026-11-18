@@ -23,6 +23,9 @@ module NavOnlineInvoice
   class Transaction
     include Redacted
 
+    # Whether the submission was a technical annulment.
+    def technical_annulment? = technical_annulment == true
+
     # Hides the technical user's login.
     def inspect
       "#<data #{self.class.name} transaction_id=#{transaction_id.inspect}, ins_date=#{ins_date.inspect}, " \

@@ -23,7 +23,8 @@ RSpec.describe NavOnlineInvoice::Operations::QueryInvoiceData do
     expect(result.audit_data).to have_attributes(ins_date: Time.utc(2026, 11, 16, 8, 15, 30.12r), source: :xml,
                                                  transaction_id: "3XAMPLETRANSACT10N01", index: 1,
                                                  original_request_version: "3.0")
-    expect([result.electronic_invoice_hash_type, result.electronic_invoice_hash.size]).to eq(["SHA3-512", 128])
+    expect(result.electronic_invoice_hash)
+      .to have_attributes(crypto_type: "SHA3-512", value: a_string_matching(/\A\h{128}\z/))
   end
 
   it "returns nil when NAV has no such invoice" do

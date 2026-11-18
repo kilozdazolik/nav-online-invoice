@@ -32,7 +32,7 @@ module NavOnlineInvoice
           xml.invoiceOperation item.operation
           xml.invoiceData item.data
           if (hash = item.electronic_invoice_hash)
-            xml.electronicInvoiceHash(hash[:value], "cryptoType" => hash[:crypto_type])
+            xml.electronicInvoiceHash(hash.value, "cryptoType" => hash.crypto_type)
           end
         end
       end

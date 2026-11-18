@@ -64,11 +64,12 @@ module NavOnlineInvoice
     end
 
     # With completenessIndicator the hash is computed from the sent data, so only SHA3-512 may be given.
+    # @param value [ElectronicInvoiceHash, Hash, nil]
     def electronic_invoice_hash(value, name, complete)
       return nil if value.nil?
 
-      unless value.is_a?(Hash) && HASH_LENGTHS.key?(value[:crypto_type]) &&
-             value[:value].to_s.match?(/\A\h{#{HASH_LENGTHS[value[:crypto_type]]}}\z/)
+      value = value.to_h if value.is_a?(ElectronicInvoiceHash)
+      unless hex_digest?(value)
         raise ArgumentError, "#{name}[:electronic_invoice_hash] must be { value:, crypto_type: } with a " \
                              "SHA3-512 or SHA-256 hex digest"
       end
@@ -76,7 +77,12 @@ module NavOnlineInvoice
         raise ArgumentError, "#{name}: an invoice with completenessIndicator needs a SHA3-512 hash"
       end
 
-      { value: value[:value].upcase, crypto_type: value[:crypto_type] }
+      ElectronicInvoiceHash.new(value: value[:value].upcase, crypto_type: value[:crypto_type])
+    end
+
+    def hex_digest?(value)
+      length = value.is_a?(Hash) && HASH_LENGTHS[value[:crypto_type]]
+      length && value[:value].to_s.match?(/\A\h{#{length}}\z/)
     end
 
     # Compresses only when needed: NAV queues compressed requests last (spec 1.6.5). An electronic invoice is
@@ -106,11 +112,11 @@ module NavOnlineInvoice
 
       computed = Crypto.electronic_invoice_hash(data)
       given = invoice.electronic_invoice_hash
-      if given && given[:value] != computed
+      if given && given.value != computed
         raise ArgumentError, "electronic_invoice_hash does not match the invoice data; leave it out to have it computed"
       end
 
-      { value: computed, crypto_type: "SHA3-512" }
+      ElectronicInvoiceHash.new(value: computed, crypto_type: "SHA3-512")
     end
   end
 end

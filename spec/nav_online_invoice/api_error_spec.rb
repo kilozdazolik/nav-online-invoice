@@ -26,6 +26,11 @@ RSpec.describe NavOnlineInvoice::ApiError do
     end
   end
 
+  it "keeps a rejected exchange token out of RequestError, since resubmitting is safe" do
+    expect(NavOnlineInvoice::ExchangeTokenError.ancestors).not_to include(NavOnlineInvoice::RequestError)
+    expect(described_class::TechnicalValidationMessage).to be(NavOnlineInvoice::TechnicalValidationMessage)
+  end
+
   describe "#retryable?" do
     it "is true only for temporary failures, maintenance and rejected exchange tokens" do
       retryable = [NavOnlineInvoice::TemporaryError, NavOnlineInvoice::MaintenanceError,

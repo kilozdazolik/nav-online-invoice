@@ -77,7 +77,7 @@ module NavOnlineInvoice
       wanted = invoice_numbers.map(&:to_s)
       found = Hash.new { |hash, number| hash[number] = [] }
       each_transaction(ins_date: UnknownOutcomeError.reconcile_window(sent_at)) do |transaction|
-        next unless (transaction.technical_annulment == true) == annulment
+        next unless transaction.technical_annulment? == annulment
 
         id = transaction.transaction_id
         (arrived_numbers(id) & wanted).each { |number| found[number] |= [id] }

@@ -59,7 +59,14 @@ RSpec.describe NavOnlineInvoice::SubmissionItems do
   it "passes the hash of your own electronic invoice through" do
     items, = prepare([{ operation: :create, xml: invoice_xml, electronic_invoice_hash: sha256 }])
 
-    expect(items.first.electronic_invoice_hash).to eq(value: "AB" * 32, crypto_type: "SHA-256")
+    expect(items.first.electronic_invoice_hash.to_h).to eq(value: "AB" * 32, crypto_type: "SHA-256")
+  end
+
+  it "takes an ElectronicInvoiceHash as well" do
+    hash = NavOnlineInvoice::ElectronicInvoiceHash.new(**sha256)
+    items, = prepare([{ operation: :create, xml: invoice_xml, electronic_invoice_hash: hash }])
+
+    expect(items.first.electronic_invoice_hash.value).to eq("AB" * 32)
   end
 
   it "rejects a malformed hash" do
@@ -71,7 +78,7 @@ RSpec.describe NavOnlineInvoice::SubmissionItems do
     it "gets the SHA3-512 of its data as sent" do
       items, = prepare([{ operation: :create, xml: complete_xml }])
 
-      expect(items.first.electronic_invoice_hash)
+      expect(items.first.electronic_invoice_hash.to_h)
         .to eq(value: NavOnlineInvoice::Crypto.electronic_invoice_hash(items.first.data), crypto_type: "SHA3-512")
     end
 
@@ -79,7 +86,7 @@ RSpec.describe NavOnlineInvoice::SubmissionItems do
       one = complete_xml.sub("<completenessIndicator>true<", "<completenessIndicator>1<")
       items, = prepare([{ operation: :create, xml: one }])
 
-      expect(items.first.electronic_invoice_hash).to include(crypto_type: "SHA3-512")
+      expect(items.first.electronic_invoice_hash.crypto_type).to eq("SHA3-512")
     end
 
     it "is never compressed" do

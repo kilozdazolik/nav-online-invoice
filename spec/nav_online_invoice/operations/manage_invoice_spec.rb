@@ -17,7 +17,7 @@ RSpec.describe NavOnlineInvoice::Operations::ManageInvoice do
       hash = node.at_xpath("api:electronicInvoiceHash", NavOnlineInvoice::NAMESPACES)
       item(node.at_xpath("api:invoiceOperation", NavOnlineInvoice::NAMESPACES).text,
            node.at_xpath("api:invoiceData", NavOnlineInvoice::NAMESPACES).text,
-           { value: hash.text, crypto_type: hash["cryptoType"] })
+           NavOnlineInvoice::ElectronicInvoiceHash.new(value: hash.text, crypto_type: hash["cryptoType"]))
     end
     operation = described_class.new(token: token.with(value: "b1aca173-d9e8-4561-9237-0511eed99eaa2P0ZHLXBRI2U"),
                                     items:, compressed: false)
@@ -64,13 +64,14 @@ RSpec.describe NavOnlineInvoice::Operations::ManageInvoice do
 
   it "reads the transaction ID" do
     xml = fixture("responses/manage_invoice/ok.xml")
-    items = [item, item("MODIFY", "QUJD", { value: "AB", crypto_type: "SHA-256" })]
+    hash = NavOnlineInvoice::ElectronicInvoiceHash.new(value: "AB", crypto_type: "SHA-256")
+    items = [item, item("MODIFY", "QUJD", hash)]
     operation = described_class.new(token:, items:, compressed: false)
 
     expect(xml).to be_valid_nav_xml
     expect(operation.parse(Nokogiri::XML(xml), request_id: "RID1", raw_xml: xml)).to eq(
       NavOnlineInvoice::Submission.new(transaction_id: "4Q8O2ZCTX1J8WGZ2", request_id: "RID1", item_count: 2,
-                                       compressed: false, electronic_invoice_hashes: [nil, "AB"])
+                                       compressed: false, electronic_invoice_hashes: [nil, hash])
     )
   end
 

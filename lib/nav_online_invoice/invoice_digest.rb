@@ -33,6 +33,9 @@ module NavOnlineInvoice
   class InvoiceDigest
     include Redacted
 
+    # Whether the data is the electronic invoice itself (completenessIndicator).
+    def complete? = completeness_indicator == true
+
     # Shows the invoice's identity only; names, tax numbers and amounts are left out.
     def inspect
       "#<data #{self.class.name} invoice_number=#{invoice_number.inspect}, operation=#{operation.inspect}, " \

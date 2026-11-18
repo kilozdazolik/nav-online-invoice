@@ -54,7 +54,7 @@ module NavOnlineInvoice
 
     def technical_validation_messages(node)
       node.xpath("api:technicalValidationMessages", NAMESPACES).map do |message|
-        ApiError::TechnicalValidationMessage.new(
+        TechnicalValidationMessage.new(
           result_code: symbol(message, "common:validationResultCode"),
           error_code: text(message, "common:validationErrorCode"),
           message: text(message, "common:message")
