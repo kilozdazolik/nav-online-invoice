@@ -9,7 +9,9 @@ module NavOnlineInvoice
   # @api private
   module XmlReader
     BOOLEANS = { "true" => true, "1" => true, "false" => false, "0" => false }.freeze
-    private_constant :BOOLEANS
+    # The lexical form of xs:decimal, e.g. "-1.50", "+5", ".5" or "5.".
+    DECIMAL = /\A[+-]?(\d+(\.\d*)?|\.\d+)\z/
+    private_constant :BOOLEANS, :DECIMAL
 
     private
 
@@ -28,7 +30,7 @@ module NavOnlineInvoice
 
     def decimal(node, xpath)
       value = text(node, xpath)&.strip
-      value&.match?(/\A-?\d+(\.\d+)?\z/) ? BigDecimal(value) : nil
+      value&.match?(DECIMAL) ? BigDecimal(value) : nil
     end
 
     def date(node, xpath)

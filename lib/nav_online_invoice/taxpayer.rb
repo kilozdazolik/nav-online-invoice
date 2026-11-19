@@ -26,11 +26,7 @@ module NavOnlineInvoice
     # The tax number as written on invoices, e.g. "12345678-2-42".
     #
     # @return [String] only the 8-digit part if NAV did not send the VAT and county codes
-    def tax_number
-      return taxpayer_id unless vat_code && county_code
-
-      "#{taxpayer_id}-#{vat_code}-#{county_code}"
-    end
+    def tax_number = TaxNumber.format(taxpayer_id, vat_code, county_code)
 
     # Leaves out the name and the addresses: for a sole trader they are personal data.
     def inspect

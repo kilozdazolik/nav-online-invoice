@@ -21,4 +21,18 @@ RSpec.describe NavOnlineInvoice::TaxNumber do
       end
     end
   end
+
+  describe ".format" do
+    it "joins the three parts" do
+      expect(described_class.format("12345678", "2", "42")).to eq("12345678-2-42")
+    end
+
+    it "keeps only the taxpayer ID when a code is missing" do
+      expect([described_class.format("12345678"), described_class.format("12345678", "2")]).to all(eq("12345678"))
+    end
+
+    it "returns nil without a taxpayer ID" do
+      expect(described_class.format(nil, "2", "42")).to be_nil
+    end
+  end
 end

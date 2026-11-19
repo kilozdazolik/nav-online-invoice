@@ -20,5 +20,20 @@ module NavOnlineInvoice
 
       digits[0, 8]
     end
+
+    # Writes a tax number the way invoices show it.
+    #
+    # @example
+    #   TaxNumber.format("12345678", "2", "42") # => "12345678-2-42"
+    # @param taxpayer_id [String, nil] the first 8 digits
+    # @param vat_code [String, nil]
+    # @param county_code [String, nil]
+    # @return [String, nil] only the 8 digits if a code is missing; nil without a taxpayer ID
+    def format(taxpayer_id, vat_code = nil, county_code = nil)
+      return unless taxpayer_id
+      return taxpayer_id unless vat_code && county_code
+
+      "#{taxpayer_id}-#{vat_code}-#{county_code}"
+    end
   end
 end

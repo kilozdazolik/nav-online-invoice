@@ -4,12 +4,7 @@ module NavOnlineInvoice
   module Operations
     # Looks up a taxpayer by tax number.
     class QueryTaxpayer < Base
-      ADDRESS_FIELDS = {
-        country_code: "countryCode", region: "region", postal_code: "postalCode", city: "city",
-        street_name: "streetName", public_place_category: "publicPlaceCategory", number: "number",
-        building: "building", staircase: "staircase", floor: "floor", door: "door", lot_number: "lotNumber"
-      }.freeze
-      private_constant :ADDRESS_FIELDS
+      include AddressReader
 
       # @param tax_number [String] 8 or 11 digits
       # @raise [ArgumentError] if the tax number has the wrong format
@@ -51,15 +46,14 @@ module NavOnlineInvoice
           incorporation: symbol(node, "api:incorporation"),
           vat_group_membership: text(node, "api:vatGroupMembership"),
           addresses: node.xpath("api:taxpayerAddressList/api:taxpayerAddressItem", NAMESPACES).map do |item|
-            address(item)
+            taxpayer_address(item)
           end
         )
       end
 
-      def address(item)
+      def taxpayer_address(item)
         place = item.at_xpath("api:taxpayerAddress", NAMESPACES)
-        Address.new(type: symbol(item, "api:taxpayerAddressType"),
-                    **ADDRESS_FIELDS.transform_values { |element| text(place, "base:#{element}") })
+        detailed_address(place, type: symbol(item, "api:taxpayerAddressType"))
       end
     end
   end

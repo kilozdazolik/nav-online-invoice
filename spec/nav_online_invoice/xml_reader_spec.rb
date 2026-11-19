@@ -34,4 +34,16 @@ RSpec.describe NavOnlineInvoice::XmlReader do
   it "returns BigDecimal amounts" do
     expect(read(:decimal, "amount")).to be_a(BigDecimal)
   end
+
+  it "reads every lexical form of xs:decimal" do
+    values = %w[+5 .5 5. -0.25].map do |value|
+      reader.send(:decimal, Nokogiri::XML("<r><v>#{value}</v></r>").root, "v")
+    end
+    expect(values).to eq([BigDecimal(5), BigDecimal("0.5"), BigDecimal(5), BigDecimal("-0.25")])
+  end
+
+  it "rejects decimals with an exponent or no digits" do
+    values = %w[1e5 . +].map { |value| reader.send(:decimal, Nokogiri::XML("<r><v>#{value}</v></r>").root, "v") }
+    expect(values).to all(be_nil)
+  end
 end
