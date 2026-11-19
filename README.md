@@ -97,6 +97,7 @@ end
 
 client.invoices.check("INV-2026-0001", direction: :outbound)   # => true if valid at NAV
 result = client.invoices.data("INV-2026-0001", direction: :outbound)
+result.invoice                                                  # the invoice as a record; see below
 result.invoice_xml                                              # the invoice in NAV's InvoiceData format
 result.document                                                 # the same, parsed with Nokogiri
 client.invoices.chain_digest("INV-2026-0001", direction: :outbound) # the invoice and its modifications
@@ -112,6 +113,44 @@ Parameters are checked before sending; a bad one raises `ArgumentError`. `data` 
 invoice for you. A long `each_digest` can walk many pages, and NAV's data can change while it does: set
 `max_pages` or narrow the filters. Every paged query has an `each_` method named after its items: `digest` and
 `each_digest`, `chain_digest` and `each_chain_element`, `transactions.list` and `each_transaction`.
+
+### Reading invoice data
+
+`data(...).invoice` reads the invoice into an `Invoice` record: the parties, the invoice details, the reference of
+a modification and the totals by VAT rate. Amounts are `BigDecimal`, dates are `Date`. Lines are not included; read
+them from `document`.
+
+```ruby
+result = client.invoices.data(digest.invoice_number, direction: :inbound,
+                                                     supplier_tax_number: digest.supplier_tax_number)
+invoice = result.invoice
+invoice.supplier.bank_account_number # "11111111-22222222-33333333" or an IBAN, as written on the invoice
+invoice.summary.gross_amount         # in invoice.currency; gross_amount_huf in forints
+invoice.exchange_rate                # HUF value of one unit; 1 for HUF
+invoice.payment_date                 # the payment deadline
+invoice.to_h                         # every field as nested hashes, e.g. for JSON
+```
+
+For an inbound invoice, pass the supplier's tax number from the digest: two suppliers can use the same invoice
+number.
+
+Things to know before paying or matching an invoice from this data:
+
+- **A modification or storno states only the change** (spec 2.5.5). `invoice.modification?` is true,
+  `invoice.reference` names the original, and every amount is the signed difference against the invoice as it
+  stood: negative for a discount or a storno. The header parts it did not change may be missing, so `customer` can
+  be `nil`. Whether it is a modification or a storno is the digest's `operation`.
+- **The gross total is optional at NAV.** When the invoice does not give it, the gem adds it up from the invoice's
+  own amounts (net plus VAT, or on a simplified invoice the gross amounts per VAT rate) and
+  `summary.gross_calculated?` is true. A simplified invoice has no net or VAT totals.
+- **A batch modification holds several invoices.** `invoice` then raises `ArgumentError`; use `result.invoices`, each
+  with its `batch_index`.
+- **Invoices sent in the 1.x or 2.0 formats** come back in those formats and raise
+  `UnsupportedInvoiceVersionError`; `document` still has the XML, and `result.audit_data.original_request_version`
+  says which format it is.
+
+`inspect` and `pp` leave out the parties and the amounts. `to_h` does not: it holds names, addresses and bank
+account numbers, so store it like the invoice itself and do not log it.
 
 ### Transactions
 
@@ -315,6 +354,7 @@ can succeed.
 | `MaintenanceError` | NAV is under maintenance, or a network device answered 503 | only a query's bare 503 (`retryable?` is true: try again later) |
 | `TemporaryError` | `OPERATION_FAILED`, `REQUEST_ID_NOT_UNIQUE` | yes, except submissions |
 | `DecodeError` | NAV sent invoice data that is not valid base64, gzip or UTF-8, or a token the exchange key does not decrypt | no |
+| `UnsupportedInvoiceVersionError` | `invoice` was called on an invoice sent in a format older than 3.0; a `DecodeError` | no |
 
 Invalid parameters raise Ruby's `ArgumentError` before anything is sent.
 

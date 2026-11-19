@@ -6,6 +6,22 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `InvoiceDataResult#invoice` and `#invoices` read the invoice of `invoices.data` into an `Invoice` record: supplier,
+  customer and fiscal representative with tax numbers, addresses and bank account numbers; the invoice details such
+  as currency, exchange rate, payment method and deadline; the reference of a modification; and the totals by VAT
+  rate. A missing gross total is added up from the invoice's own amounts. Lines are not included.
+- `Invoice#to_h` and the other new records return nested hashes, ready to be written as JSON.
+- `UnsupportedInvoiceVersionError`, a `DecodeError`, for invoices sent in the 1.x or 2.0 formats.
+- `Address#additional_address_detail` and `Address#simple?`, for NAV's simple address form; `type`, `street_name`
+  and `public_place_category` are now optional.
+- `TaxNumber.format`.
+
+### Fixed
+
+- Amounts written as `+5`, `.5` or `5.`, all valid `xs:decimal` forms, are read instead of becoming `nil`.
+
 ## [0.3.0] - 2026-11-18
 
 ### Fixed
