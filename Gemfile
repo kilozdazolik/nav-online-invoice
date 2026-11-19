@@ -5,7 +5,7 @@ source "https://rubygems.org"
 gemspec
 
 # The version bundled with Ruby 4.0, so CI on Windows uses it instead of compiling a newer one.
-gem "bigdecimal", "4.0.1"
+gem "bigdecimal", "4.1.3"
 
 gem "logger"
 gem "rake", "~> 13.0"
