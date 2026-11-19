@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- An invented simplified invoice that gives no gross total. -->
+<InvoiceData xmlns="http://schemas.nav.gov.hu/OSA/3.0/data" xmlns:base="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <invoiceNumber>INV-2026-0003</invoiceNumber>
+  <invoiceIssueDate>2026-11-16</invoiceIssueDate>
+  <completenessIndicator>false</completenessIndicator>
+  <invoiceMain>
+    <invoice>
+      <invoiceHead>
+        <supplierInfo>
+          <supplierTaxNumber><base:taxpayerId>12345678</base:taxpayerId><base:vatCode>2</base:vatCode><base:countyCode>42</base:countyCode></supplierTaxNumber>
+          <supplierName>EXAMPLE TRADING KFT.</supplierName>
+          <supplierAddress><base:simpleAddress><base:countryCode>HU</base:countryCode><base:postalCode>1234</base:postalCode><base:city>BUDAPEST</base:city><base:additionalAddressDetail>MINTA UTCA 12.</base:additionalAddressDetail></base:simpleAddress></supplierAddress>
+          <supplierBankAccountNumber>11111111-22222222-33333333</supplierBankAccountNumber>
+        </supplierInfo>
+        <invoiceDetail>
+          <invoiceCategory>SIMPLIFIED</invoiceCategory>
+          <invoiceDeliveryDate>2026-11-16</invoiceDeliveryDate>
+          <currencyCode>HUF</currencyCode>
+          <exchangeRate>1</exchangeRate>
+          <paymentMethod>CASH</paymentMethod>
+          <invoiceAppearance>ELECTRONIC</invoiceAppearance>
+        </invoiceDetail>
+      </invoiceHead>
+      <invoiceSummary>
+        <summarySimplified><vatRate><vatContent>0.2126</vatContent></vatRate><vatContentGrossAmount>12700</vatContentGrossAmount><vatContentGrossAmountHUF>12700</vatContentGrossAmountHUF></summarySimplified>
+        <summarySimplified><vatRate><vatContent>0.0476</vatContent></vatRate><vatContentGrossAmount>1050</vatContentGrossAmount><vatContentGrossAmountHUF>1050</vatContentGrossAmountHUF></summarySimplified>
+      </invoiceSummary>
+    </invoice>
+  </invoiceMain>
+</InvoiceData>

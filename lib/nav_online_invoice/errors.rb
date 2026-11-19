@@ -127,6 +127,10 @@ module NavOnlineInvoice
   # exchange token that does not decrypt with the exchange key.
   class DecodeError < Error; end
 
+  # The invoice data is in an older format (1.x or 2.0) than {InvoiceDataResult#invoice} can read. The XML is still
+  # in {InvoiceDataResult#document}.
+  class UnsupportedInvoiceVersionError < DecodeError; end
+
   # NAV answered with an error code.
   #
   # Subclasses group the codes by what the caller can do about them. An unknown code is raised as

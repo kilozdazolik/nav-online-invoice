@@ -104,8 +104,8 @@ module NavOnlineInvoice
     # Fetches the full data of one invoice.
     #
     # @example
-    #   result = client.invoices.data("INV-2026-0001", direction: :outbound)
-    #   result&.document&.at_xpath("//data:invoiceNumber", "data" => "http://schemas.nav.gov.hu/OSA/3.0/data")
+    #   invoice = client.invoices.data("INV-2026-0001", direction: :inbound, supplier_tax_number: "12345678")&.invoice
+    #   invoice&.summary&.gross_amount
     # @param (see #check)
     # @return [InvoiceDataResult, nil] nil if NAV has no such invoice for you
     # @raise [ArgumentError] if a parameter is invalid

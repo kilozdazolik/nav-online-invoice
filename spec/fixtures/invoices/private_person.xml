@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- An invented invoice to a private person, exempt from VAT. -->
+<InvoiceData xmlns="http://schemas.nav.gov.hu/OSA/3.0/data" xmlns:base="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <invoiceNumber>INV-2026-0004</invoiceNumber>
+  <invoiceIssueDate>2026-11-16</invoiceIssueDate>
+  <completenessIndicator>false</completenessIndicator>
+  <invoiceMain>
+    <invoice>
+      <invoiceHead>
+        <supplierInfo>
+          <supplierTaxNumber><base:taxpayerId>12345678</base:taxpayerId><base:vatCode>2</base:vatCode><base:countyCode>42</base:countyCode></supplierTaxNumber>
+          <supplierName>EXAMPLE TRADING KFT.</supplierName>
+          <supplierAddress><base:simpleAddress><base:countryCode>HU</base:countryCode><base:postalCode>1234</base:postalCode><base:city>BUDAPEST</base:city><base:additionalAddressDetail>MINTA UTCA 12.</base:additionalAddressDetail></base:simpleAddress></supplierAddress>
+          <supplierBankAccountNumber>11111111-22222222-33333333</supplierBankAccountNumber>
+        </supplierInfo>
+        <customerInfo>
+          <customerVatStatus>PRIVATE_PERSON</customerVatStatus>
+        </customerInfo>
+        <invoiceDetail>
+          <invoiceCategory>NORMAL</invoiceCategory>
+          <invoiceDeliveryDate>2026-11-16</invoiceDeliveryDate>
+          <smallBusinessIndicator>true</smallBusinessIndicator>
+          <currencyCode>HUF</currencyCode>
+          <exchangeRate>1</exchangeRate>
+          <paymentMethod>CARD</paymentMethod><paymentDate>2026-11-16</paymentDate><cashAccountingIndicator>true</cashAccountingIndicator>
+          <invoiceAppearance>ELECTRONIC</invoiceAppearance>
+        </invoiceDetail>
+      </invoiceHead>
+      <invoiceSummary>
+        <summaryNormal>
+          <summaryByVatRate>
+            <vatRate><vatExemption><case>AAM</case><reason>Alanyi adómentes</reason></vatExemption></vatRate>
+            <vatRateNetData><vatRateNetAmount>8000</vatRateNetAmount><vatRateNetAmountHUF>8000</vatRateNetAmountHUF></vatRateNetData>
+            <vatRateVatData><vatRateVatAmount>0</vatRateVatAmount><vatRateVatAmountHUF>0</vatRateVatAmountHUF></vatRateVatData>
+          </summaryByVatRate>
+          <invoiceNetAmount>8000</invoiceNetAmount>
+          <invoiceNetAmountHUF>8000</invoiceNetAmountHUF>
+          <invoiceVatAmount>0</invoiceVatAmount>
+          <invoiceVatAmountHUF>0</invoiceVatAmountHUF>
+        </summaryNormal>
+      </invoiceSummary>
+    </invoice>
+  </invoiceMain>
+</InvoiceData>

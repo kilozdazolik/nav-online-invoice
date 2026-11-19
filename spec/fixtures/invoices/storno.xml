@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- An invented storno of INV-2026-0001 after the discount in MOD-2026-0001. -->
+<InvoiceData xmlns="http://schemas.nav.gov.hu/OSA/3.0/data" xmlns:base="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <invoiceNumber>STORNO-2026-0001</invoiceNumber>
+  <invoiceIssueDate>2026-11-19</invoiceIssueDate>
+  <completenessIndicator>false</completenessIndicator>
+  <invoiceMain>
+    <invoice>
+      <invoiceReference>
+        <originalInvoiceNumber>INV-2026-0001</originalInvoiceNumber>
+        <modifyWithoutMaster>false</modifyWithoutMaster>
+        <modificationIndex>2</modificationIndex>
+      </invoiceReference>
+      <invoiceHead>
+        <supplierInfo>
+          <supplierTaxNumber><base:taxpayerId>12345678</base:taxpayerId><base:vatCode>2</base:vatCode><base:countyCode>42</base:countyCode></supplierTaxNumber>
+          <supplierName>EXAMPLE TRADING KFT.</supplierName>
+          <supplierAddress><base:simpleAddress><base:countryCode>HU</base:countryCode><base:postalCode>1234</base:postalCode><base:city>BUDAPEST</base:city><base:additionalAddressDetail>MINTA UTCA 12.</base:additionalAddressDetail></base:simpleAddress></supplierAddress>
+          <supplierBankAccountNumber>11111111-22222222-33333333</supplierBankAccountNumber>
+        </supplierInfo>
+        <customerInfo>
+          <customerVatStatus>DOMESTIC</customerVatStatus>
+          <customerVatData><customerTaxNumber><base:taxpayerId>87654321</base:taxpayerId><base:vatCode>1</base:vatCode><base:countyCode>13</base:countyCode></customerTaxNumber></customerVatData>
+          <customerName>PÉLDA ÜGYFÉL BT.</customerName>
+          <customerAddress><base:simpleAddress><base:countryCode>HU</base:countryCode><base:postalCode>2000</base:postalCode><base:city>SZENTENDRE</base:city><base:additionalAddressDetail>PÉLDA ÚT 3.</base:additionalAddressDetail></base:simpleAddress></customerAddress>
+        </customerInfo>
+        <invoiceDetail>
+          <invoiceCategory>NORMAL</invoiceCategory>
+          <invoiceDeliveryDate>2026-11-16</invoiceDeliveryDate>
+          <currencyCode>HUF</currencyCode>
+          <exchangeRate>1</exchangeRate>
+          <paymentMethod>TRANSFER</paymentMethod><paymentDate>2026-11-24</paymentDate>
+          <invoiceAppearance>ELECTRONIC</invoiceAppearance>
+        </invoiceDetail>
+      </invoiceHead>
+      <invoiceSummary>
+        <summaryNormal>
+          <summaryByVatRate>
+            <vatRate><vatPercentage>0.27</vatPercentage></vatRate>
+            <vatRateNetData><vatRateNetAmount>-15000</vatRateNetAmount><vatRateNetAmountHUF>-15000</vatRateNetAmountHUF></vatRateNetData>
+            <vatRateVatData><vatRateVatAmount>-4050</vatRateVatAmount><vatRateVatAmountHUF>-4050</vatRateVatAmountHUF></vatRateVatData>
+          </summaryByVatRate>
+          <invoiceNetAmount>-15000</invoiceNetAmount>
+          <invoiceNetAmountHUF>-15000</invoiceNetAmountHUF>
+          <invoiceVatAmount>-4050</invoiceVatAmount>
+          <invoiceVatAmountHUF>-4050</invoiceVatAmountHUF>
+        </summaryNormal>
+        <summaryGrossData><invoiceGrossAmount>-19050</invoiceGrossAmount><invoiceGrossAmountHUF>-19050</invoiceGrossAmountHUF></summaryGrossData>
+      </invoiceSummary>
+    </invoice>
+  </invoiceMain>
+</InvoiceData>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- An invented EUR invoice with detailed and foreign addresses. -->
+<InvoiceData xmlns="http://schemas.nav.gov.hu/OSA/3.0/data" xmlns:base="http://schemas.nav.gov.hu/OSA/3.0/base">
+  <invoiceNumber>INV-2026-0002</invoiceNumber>
+  <invoiceIssueDate>2026-11-16</invoiceIssueDate>
+  <completenessIndicator>false</completenessIndicator>
+  <invoiceMain>
+    <invoice>
+      <invoiceHead>
+        <supplierInfo>
+          <supplierTaxNumber><base:taxpayerId>12345678</base:taxpayerId><base:vatCode>2</base:vatCode><base:countyCode>42</base:countyCode></supplierTaxNumber>
+          <groupMemberTaxNumber><base:taxpayerId>11223344</base:taxpayerId><base:vatCode>4</base:vatCode><base:countyCode>41</base:countyCode></groupMemberTaxNumber>
+          <communityVatNumber>HU12345678</communityVatNumber>
+          <supplierName>EXAMPLE TRADING KFT.</supplierName>
+          <supplierAddress><base:detailedAddress><base:countryCode>HU</base:countryCode><base:postalCode>9021</base:postalCode><base:city>GYŐR</base:city><base:streetName>MINTA</base:streetName><base:publicPlaceCategory>UTCA</base:publicPlaceCategory><base:number>12</base:number><base:floor>2</base:floor></base:detailedAddress></supplierAddress>
+          <supplierBankAccountNumber>HU00123456781234567812345678</supplierBankAccountNumber>
+        </supplierInfo>
+        <customerInfo>
+          <customerVatStatus>OTHER</customerVatStatus>
+          <customerVatData><communityVatNumber>DE123456789</communityVatNumber></customerVatData>
+          <customerName>BEISPIEL GMBH</customerName>
+          <customerAddress><base:simpleAddress><base:countryCode>DE</base:countryCode><base:postalCode>10115</base:postalCode><base:city>BERLIN</base:city><base:additionalAddressDetail>MUSTERSTRASSE 1.</base:additionalAddressDetail></base:simpleAddress></customerAddress>
+          <customerBankAccountNumber>DE00123456781234567890</customerBankAccountNumber>
+        </customerInfo>
+        <invoiceDetail>
+          <invoiceCategory>NORMAL</invoiceCategory>
+          <invoiceDeliveryDate>2026-11-16</invoiceDeliveryDate>
+          <currencyCode>EUR</currencyCode>
+          <exchangeRate>400.5</exchangeRate>
+          <paymentMethod>TRANSFER</paymentMethod><paymentDate>2026-12-16</paymentDate>
+          <invoiceAppearance>ELECTRONIC</invoiceAppearance>
+        </invoiceDetail>
+      </invoiceHead>
+      <invoiceSummary>
+        <summaryNormal>
+          <summaryByVatRate>
+            <vatRate><vatPercentage>0.27</vatPercentage></vatRate>
+            <vatRateNetData><vatRateNetAmount>1000</vatRateNetAmount><vatRateNetAmountHUF>400500</vatRateNetAmountHUF></vatRateNetData>
+            <vatRateVatData><vatRateVatAmount>270</vatRateVatAmount><vatRateVatAmountHUF>108135</vatRateVatAmountHUF></vatRateVatData><vatRateGrossData><vatRateGrossAmount>1270</vatRateGrossAmount><vatRateGrossAmountHUF>508635</vatRateGrossAmountHUF></vatRateGrossData>
+          </summaryByVatRate>
+          <invoiceNetAmount>1000</invoiceNetAmount>
+          <invoiceNetAmountHUF>400500</invoiceNetAmountHUF>
+          <invoiceVatAmount>270</invoiceVatAmount>
+          <invoiceVatAmountHUF>108135</invoiceVatAmountHUF>
+        </summaryNormal>
+        <summaryGrossData><invoiceGrossAmount>1270</invoiceGrossAmount><invoiceGrossAmountHUF>508635</invoiceGrossAmountHUF></summaryGrossData>
+      </invoiceSummary>
+    </invoice>
+  </invoiceMain>
+</InvoiceData>
