@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-19
+
 ### Added
 
 - `InvoiceDataResult#invoice` and `#invoices` read the invoice of `invoices.data` into an `Invoice` record: supplier,
@@ -127,7 +129,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 - Project skeleton: gemspec, RSpec, RuboCop, GitHub Actions CI. No public API yet.
 
-[Unreleased]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kilozdazolik/nav-online-invoice/compare/v0.0.1...v0.1.0
